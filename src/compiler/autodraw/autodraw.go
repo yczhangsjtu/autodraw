@@ -19,7 +19,7 @@ func main() {
 	fmt.Println(verbose)
 	fmt.Println(help)
 
-	oper := operation.Parse("poly abc")
+	oper := operation.Parse("polygon 0.0 0.0 1.0 0.0 1.0 1.1 0.0 1.0")
 	operation.OperationPrint(oper)
 	fmt.Println("")
 
