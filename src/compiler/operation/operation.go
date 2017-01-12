@@ -1,3 +1,17 @@
+// This file is part of autodraw.
+//
+// Autodraw is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Autodraw is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
 import "fmt"
@@ -16,6 +30,8 @@ const (
 	POP
 	TRANSFORM
 )
+
+const Version string = "1.0"
 
 var OperationNames = []string {
 	"undefined","line","rect","circle","oval","polygon","set","use",
@@ -42,6 +58,20 @@ type Operation struct {
 	Name string
 	Transform Transform
 	Detail Instruction
+}
+
+var Verbose bool = false
+
+func f2i(f float64) int16 {
+	if f > 0.0 {
+		return int16(f*100.0+0.5)
+	} else {
+		return int16(f*100.0-0.5)
+	}
+}
+
+func i2f(i int16) float64 {
+	return float64(i)/100.0;
 }
 
 func NewOperation(op int16) Operation {
@@ -87,21 +117,19 @@ func NewInstruction(op int16) Instruction {
 
 func NewLineInstruction(x1,y1,x2,y2 float64) Instruction {
 	instruction := NewInstruction(LINE)
-	instruction.Args = []int16 {int16(x1*100),int16(y1*100),
-															int16(x2*100),int16(y2*100)}
+	instruction.Args = []int16 {f2i(x1),f2i(y1),f2i(x2),f2i(y2)}
 	return instruction;
 }
 
 func NewRectInstruction(x1,y1,x2,y2 float64) Instruction {
 		instruction := NewInstruction(RECT)
-		instruction.Args = []int16 {int16(x1*100),int16(y1*100),
-																int16(x2*100),int16(y2*100)}
+		instruction.Args = []int16 {f2i(x1),f2i(y1),f2i(x2),f2i(y2)}
 		return instruction;
 }
 
 func NewCircleInstruction(x,y,r float64) Instruction {
 		instruction := NewInstruction(CIRCLE)
-		instruction.Args = []int16 {int16(x*100),int16(y*100),int16(r*100)}
+		instruction.Args = []int16 {f2i(x),f2i(y),f2i(r)}
 		return instruction;
 }
 
@@ -110,7 +138,7 @@ func NewPolygonInstruction(coords ...float64) Instruction {
 		instruction := NewInstruction(POLYGON)
 		instruction.Args = make([]int16,len(coords));
 		for i,_ := range(coords) {
-			instruction.Args[i] = int16(coords[i]*100)
+			instruction.Args[i] = f2i(coords[i])
 		}
 		return instruction;
 	} else {
@@ -128,7 +156,7 @@ func HasName(op int16) bool {
 
 func OperationPrint(op Operation) {
 	fmt.Printf("%s",OperationNames[op.Op])
-	if HasName(op.Op) {
+	if HasName(op.Op) && op.Name != "" {
 		fmt.Printf(" %s",op.Name)
 	}
 	if HasTransform(op.Op) {
@@ -140,15 +168,42 @@ func OperationPrint(op Operation) {
 }
 
 func TransformPrint(tf Transform) {
-	fmt.Printf("[[%f,%f;%f,%f],[%f,%f]]",float64(tf.a)/100,float64(tf.b)/100,
-			float64(tf.c)/100,float64(tf.d)/100,float64(tf.x)/100,float64(tf.y)/100)
+	fmt.Printf("[[%f,%f;%f,%f],[%f,%f]]",i2f(tf.a),i2f(tf.b),i2f(tf.c),i2f(tf.d),
+		i2f(tf.x),i2f(tf.y))
 }
 
 func InstructionPrint(ins Instruction) {
 	fmt.Printf("%s",OperationNames[ins.Op])
 	for _,v := range ins.Args {
-		fmt.Printf(" %f",float64(v)/100)
+		fmt.Printf(" %f",i2f(v))
 	}
+}
+
+func OperationToString(op Operation) string {
+	ret := fmt.Sprintf("%s",OperationNames[op.Op])
+	if HasName(op.Op) && op.Name != "" {
+		ret += fmt.Sprintf(" %s",op.Name)
+	}
+	if HasTransform(op.Op) {
+		ret += fmt.Sprint(" ")
+		ret += TransformToString(op.Transform)
+	}
+	ret += fmt.Sprint(" ")
+	ret += InstructionToString(op.Detail)
+	return ret
+}
+
+func TransformToString(tf Transform) string {
+	return fmt.Sprintf("[[%f,%f;%f,%f],[%f,%f]]",i2f(tf.a),i2f(tf.b),i2f(tf.c),
+		i2f(tf.d),i2f(tf.x),i2f(tf.y))
+}
+
+func InstructionToString(ins Instruction) string {
+	ret := fmt.Sprintf("%s",OperationNames[ins.Op])
+	for _,v := range ins.Args {
+		ret += fmt.Sprintf(" %f",i2f(v))
+	}
+	return ret
 }
 
 func OperationEqual(op1, op2 Operation) bool {
