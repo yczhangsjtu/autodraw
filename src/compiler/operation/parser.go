@@ -16,41 +16,41 @@ func Parse(line string) Operation {
 		if Verbose {
 			log.Output(1,"operation not recognized: "+tokens[0])
 		}
-		operation.Op = UNDEFINED
-		return operation
+		return NewOperation(UNDEFINED)
 	}
 
-	nnums := len(tokens)-1
+	nargs := len(tokens)-1
 	if operation.Op == POLYGON || operation.Op == LINE || operation.Op == RECT ||
-		 operation.Op == CIRCLE {
-		if operation.Op == POLYGON && (nnums%2 != 0 || nnums < 6) {
+		 operation.Op == CIRCLE || operation.Op == OVAL {
+		if operation.Op == POLYGON && (nargs%2 != 0 || nargs < 6) {
 			if Verbose {
 				log.Output(1,"odd number of polygon coordinates")
 			}
-			operation.Op = UNDEFINED
-			return operation
-		} else if (operation.Op == LINE || operation.Op == RECT) && nnums != 4 {
+			return NewOperation(UNDEFINED)
+		} else if (operation.Op == LINE || operation.Op == RECT) && nargs != 4 {
 			if Verbose {
 				log.Output(1,"incorrect number of line coordinates")
 			}
-			operation.Op = UNDEFINED
-			return operation
-		} else if (operation.Op == CIRCLE && nnums != 3) {
+			return NewOperation(UNDEFINED)
+		} else if operation.Op == CIRCLE && nargs != 3 {
 			if Verbose {
 				log.Output(1,"incorrect number of circle coordinates")
 			}
-			operation.Op = UNDEFINED
-			return operation
+			return NewOperation(UNDEFINED)
+		} else if operation.Op == OVAL && nargs != 5 {
+			if Verbose {
+				log.Output(1,"incorrect number of oval coordinates")
+			}
+			return NewOperation(UNDEFINED)
 		}
-		operation.Detail.Args = make([]int16,nnums)
-		for i := 1; i <= nnums; i++ {
+		operation.Detail.Args = make([]int16,nargs)
+		for i := 1; i <= nargs; i++ {
 			x,err := strconv.ParseFloat(tokens[i],64)
 			if err != nil {
 				if Verbose {
 					log.Output(1,"invalid float "+tokens[i])
 				}
-				operation.Op = UNDEFINED
-				return operation
+				return NewOperation(UNDEFINED)
 			}
 			operation.Detail.Args[i-1] = f2i(x)
 		}
@@ -58,5 +58,55 @@ func Parse(line string) Operation {
 		return operation
 	}
 
+	if operation.Op == SET {
+		if nargs != 2 {
+			if Verbose {
+				log.Output(1,"incorrect number of set arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidName(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid name")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		x,err := strconv.ParseFloat(tokens[2],64)
+		if err != nil {
+			if Verbose {
+				log.Output(1,"invalid float "+tokens[2])
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Name = tokens[1]
+		operation.Detail.Op = SET
+		operation.Detail.Args = []int16{f2i(x)}
+		return operation
+	}
+
+	if operation.Op == USE {
+		if nargs < 3 {
+			if Verbose {
+				log.Output(1,"incorrect number of use arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidName(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid name")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		tmpOperation := Parse(strings.Join(tokens[2:]," "))
+		if tmpOperation.Op == UNDEFINED {
+			if Verbose {
+				log.Output(1,"invalid suboperation in use")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Name = tokens[1]
+		operation.Detail = tmpOperation.Detail
+		return operation
+	}
 	return operation
 }

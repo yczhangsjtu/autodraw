@@ -19,13 +19,6 @@ import "testing"
 import "strings"
 import "reflect"
 
-func BenchmarkOperationPrint(b *testing.B) {
-	OperationPrint(NewOperation(LINE));
-	OperationPrint(NewOperation(RECT));
-	OperationPrint(NewOperation(CIRCLE));
-	OperationPrint(NewOperation(OVAL));
-}
-
 func TestNewOperation(t *testing.T) {
 	var operation Operation
 	for i,v := range OperationNames {
@@ -55,6 +48,18 @@ func TestNewOperation(t *testing.T) {
 		 reflect.DeepEqual(operation.Detail.Args,
 		 [6]int16{-221,242,123,114,455,126}) {
 		t.Errorf("NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26) failed")
+	}
+	operation = NewSetOperation("scale",1.1)
+	if operation.Op != SET || operation.Detail.Op != SET ||
+		 operation.Name != "scale" || reflect.DeepEqual(operation.Detail.Args,
+		 [1]int16{110}) {
+		t.Errorf("NewSetOperation(1.1) failed")
+	}
+	operation = NewUseOperation("T",NewLineInstruction(0.0,0.0,-1.0,-1.0))
+	if operation.Op != USE || operation.Detail.Op != LINE ||
+		 operation.Name != "T" || !InstructionEqual(operation.Detail,
+			 NewLineInstruction(0.0,0.0,-1.0,-1.0)) {
+		t.Errorf("NewUseOperation(T,line) failed")
 	}
 }
 
@@ -110,5 +115,28 @@ func TestToString(t *testing.T) {
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"polygon",expect,operationStr)
+	}
+	operation = NewOvalOperation(-2.21,2.42,1.13,1.23,4.55)
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("oval oval %f %f %f %f %f",
+			float64(-2.21),float64(2.42),float64(1.13),float64(1.23),float64(4.55))
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"oval",expect,operationStr)
+	}
+	operation = NewSetOperation("scale",1.1)
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("set scale set %f",float64(1.1))
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"set",expect,operationStr)
+	}
+	operation = NewUseOperation("T",NewLineInstruction(0.0,1.1,-0.1,-1.0))
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("use T line %f %f %f %f",
+			float64(0.0),float64(1.1),float64(-0.1),float64(-1.0))
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"use",expect,operationStr)
 	}
 }

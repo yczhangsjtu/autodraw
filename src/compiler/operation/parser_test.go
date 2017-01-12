@@ -17,6 +17,27 @@ package operation
 import "fmt"
 import "testing"
 
+func BenchmarkParse(b *testing.B) {
+	tests := []string {
+		"undefined",
+		"line 1.2 3.0 1.1 3.1",
+		"rect 1.1 0.0 0.0 1.1",
+		"polygon 1.1 1.0 0.0 0.1 2.1 2.2",
+		"circle 1.1 1.1 1.0",
+		"set scale 1.1",
+		"use T line 1.2 3.0 1.1 3.1",
+		"line 1.2 3.0 1.1",
+		"rect 1.1 0.0 0.0",
+		"polygon 1.1 1.0 0.0 0.1 2.2",
+		"circle 1.1 1.1",
+	}
+	for i := 0; i < b.N; i++ {
+		for _,test := range tests {
+			Parse(test)
+		}
+	}
+}
+
 func TestParse(t *testing.T) {
 	Verbose = false
 	tests := []string {
@@ -25,6 +46,9 @@ func TestParse(t *testing.T) {
 		"rect 1.1 0.0 0.0 1.1",
 		"polygon 1.1 1.0 0.0 0.1 2.1 2.2",
 		"circle 1.1 1.1 1.0",
+		"oval 1.1 1.1 1.0 0.5 0.5",
+		"set scale 1.1",
+		"use T line 1.2 3.0 1.1 3.1",
 		"line 1.2 3.0 1.1",
 		"rect 1.1 0.0 0.0",
 		"polygon 1.1 1.0 0.0 0.1 2.2",
@@ -36,6 +60,9 @@ func TestParse(t *testing.T) {
 		NewRectOperation(1.1,0.0,0.0,1.1),
 		NewPolygonOperation(1.1,1.0,0.0,0.1,2.1,2.2),
 		NewCircleOperation(1.1,1.1,1.0),
+		NewOvalOperation(1.1,1.1,1.0,0.5,0.5),
+		NewSetOperation("scale",1.1),
+		NewUseOperation("T",NewLineInstruction(1.2,3.0,1.1,3.1)),
 		NewOperation(UNDEFINED),
 		NewOperation(UNDEFINED),
 		NewOperation(UNDEFINED),
@@ -45,7 +72,8 @@ func TestParse(t *testing.T) {
 	for i,test := range tests {
 		result := Parse(test)
 		if !OperationEqual(expects[i],result) {
-			t.Errorf("Parser failed for [%s]\n",test)
+			t.Errorf("Parser failed for [%s], expect (%s), got (%s)\n",
+							test,OperationToString(expects[i]),OperationToString(result))
 			OperationPrint(expects[i])
 			fmt.Print(" vs. ")
 			OperationPrint(result)

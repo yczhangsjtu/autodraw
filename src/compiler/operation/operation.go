@@ -16,6 +16,7 @@ package operation
 
 import "fmt"
 import "reflect"
+import "unicode"
 
 const (
 	UNDEFINED int16 = iota
@@ -99,6 +100,32 @@ func NewCircleOperation(x,y,r float64) Operation {
 	return operation
 }
 
+func NewOvalOperation(x,y,a,b,r float64) Operation {
+	operation := NewOperation(OVAL)
+	operation.Detail = NewOvalInstruction(x,y,a,b,r)
+	return operation
+}
+
+func NewSetOperation(name string,v float64) Operation {
+	if !ValidName(name) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(SET)
+	operation.Name = name
+	operation.Detail = NewSetInstruction(name,v)
+	return operation
+}
+
+func NewUseOperation(name string,ins Instruction) Operation {
+	if !ValidName(name) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(USE)
+	operation.Name = name
+	operation.Detail = ins
+	return operation
+}
+
 func NewPolygonOperation(coords ...float64) Operation {
 	if len(coords) >= 4 && len(coords)%2 == 0 {
 		operation := NewOperation(POLYGON)
@@ -133,6 +160,12 @@ func NewCircleInstruction(x,y,r float64) Instruction {
 		return instruction;
 }
 
+func NewOvalInstruction(x,y,a,b,t float64) Instruction {
+		instruction := NewInstruction(OVAL)
+		instruction.Args = []int16 {f2i(x),f2i(y),f2i(a),f2i(b),f2i(t)}
+		return instruction;
+}
+
 func NewPolygonInstruction(coords ...float64) Instruction {
 	if len(coords) >= 4 && len(coords)%2 == 0 {
 		instruction := NewInstruction(POLYGON)
@@ -146,12 +179,30 @@ func NewPolygonInstruction(coords ...float64) Instruction {
 	}
 }
 
+func NewSetInstruction(name string,v float64) Instruction {
+		instruction := NewInstruction(SET)
+		instruction.Args = []int16 {f2i(v)}
+		return instruction;
+}
+
 func HasTransform(op int16) bool {
-	return op == USE || op == PUSH || op == POP || op == TRANSFORM
+	return op == PUSH || op == POP || op == TRANSFORM
 }
 
 func HasName(op int16) bool {
-	return op == SET || op == TRANSFORM
+	return op == USE || op == SET || op == TRANSFORM
+}
+
+func ValidName(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	for _,c := range name {
+		if !unicode.IsLetter(c) {
+			return false
+		}
+	}
+	return true
 }
 
 func OperationPrint(op Operation) {
