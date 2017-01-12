@@ -14,6 +14,7 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
+import "os"
 import "fmt"
 import "reflect"
 import "unicode"
@@ -30,19 +31,21 @@ const (
 	PUSH
 	POP
 	TRANSFORM
+	DRAW
+	IMPORT
 )
 
 const Version string = "1.0"
 
 var OperationNames = []string {
 	"undefined","line","rect","circle","oval","polygon","set","use",
-	"push","pop","transform",
+	"push","pop","transform","draw","import",
 }
 
 var OperationNameMap = map[string] int16 {
 	"undefined":UNDEFINED, "line":LINE, "rect":RECT, "circle":CIRCLE,
 	"oval":OVAL, "polygon":POLYGON, "set":SET, "use":USE, "push":PUSH,
-	"pop":POP, "transform":TRANSFORM,
+	"pop":POP, "transform":TRANSFORM,"draw":DRAW,"import":IMPORT,
 }
 
 type Instruction struct {
@@ -123,6 +126,26 @@ func NewPushOperation(name string) Operation {
 	operation := NewOperation(PUSH)
 	operation.Name = name
 	operation.Detail = NewInstruction(PUSH)
+	return operation
+}
+
+func NewDrawOperation(name string) Operation {
+	if !ValidName(name) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(DRAW)
+	operation.Name = name
+	operation.Detail = NewInstruction(DRAW)
+	return operation
+}
+
+func NewImportOperation(path string) Operation {
+	if !ValidPath(path) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(IMPORT)
+	operation.Name = path
+	operation.Detail = NewInstruction(IMPORT)
 	return operation
 }
 
@@ -222,7 +245,8 @@ func HasTransform(op int16) bool {
 }
 
 func HasName(op int16) bool {
-	return op == PUSH || op == POP || op == USE || op == SET || op == TRANSFORM
+	return op == PUSH || op == POP || op == USE || op == SET ||
+		op == TRANSFORM || op == DRAW || op == IMPORT
 }
 
 func ValidName(name string) bool {
@@ -233,6 +257,19 @@ func ValidName(name string) bool {
 		if !unicode.IsLetter(c) {
 			return false
 		}
+	}
+	return true
+}
+
+func ValidPath(path string) bool {
+	if len(path) == 0 {
+		return false
+	}
+	file,err := os.Open(path)
+	if err != nil {
+		return false
+	} else {
+		file.Close()
 	}
 	return true
 }

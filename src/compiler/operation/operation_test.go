@@ -81,6 +81,21 @@ func TestNewOperation(t *testing.T) {
 		 NewTransform(1.1,-0.1,0.1,-0.9,-2.0,0.0)) {
 		t.Errorf("NewTransformOperation(T) failed, got %s",OperationToString(operation))
 	}
+	operation = NewDrawOperation("plane")
+	if operation.Op != DRAW || operation.Detail.Op != DRAW ||
+		 operation.Name != "plane" || len(operation.Detail.Args)!=0 {
+		t.Errorf("NewDrawOperation(plane) failed, got %s",OperationToString(operation))
+	}
+	operation = NewImportOperation("plane.adr")
+	if operation.Op != IMPORT || operation.Detail.Op != IMPORT ||
+		 operation.Name != "plane.adr" || len(operation.Detail.Args)!=0 {
+		t.Errorf("NewDrawOperation(plane.adr) failed, got %s",OperationToString(operation))
+	}
+	operation = NewImportOperation("no-plane.adr")
+	if operation.Op != UNDEFINED {
+		t.Errorf("NewDrawOperation(no-plane.adr) succeeded by mistake, got %s",
+			OperationToString(operation))
+	}
 }
 
 func TestToString(t *testing.T) {
@@ -181,5 +196,19 @@ func TestToString(t *testing.T) {
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"transform",expect,operationStr)
+	}
+	operation = NewDrawOperation("plane")
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("draw plane draw")
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"draw",expect,operationStr)
+	}
+	operation = NewImportOperation("plane.adr")
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("import plane.adr import")
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"import",expect,operationStr)
 	}
 }

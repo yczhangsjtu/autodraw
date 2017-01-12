@@ -172,5 +172,41 @@ func Parse(line string) Operation {
 		operation.Detail.Op = TRANSFORM
 		return operation
 	}
+
+	if operation.Op == DRAW {
+		if nargs != 1 {
+			if Verbose {
+				log.Output(1,"incorrect number of draw arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidName(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid name")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Name = tokens[1]
+		operation.Detail = NewInstruction(DRAW)
+		return operation
+	}
+
+	if operation.Op == IMPORT {
+		if nargs != 1 {
+			if Verbose {
+				log.Output(1,"incorrect number of import arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidPath(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid path")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Name = tokens[1]
+		operation.Detail = NewInstruction(IMPORT)
+		return operation
+	}
 	return operation
 }
