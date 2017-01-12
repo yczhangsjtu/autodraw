@@ -108,5 +108,69 @@ func Parse(line string) Operation {
 		operation.Detail = tmpOperation.Detail
 		return operation
 	}
+
+	if operation.Op == PUSH {
+		if nargs != 1 {
+			if Verbose {
+				log.Output(1,"incorrect number of push arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidName(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid name")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Name = tokens[1]
+		operation.Detail = NewInstruction(PUSH)
+		return operation
+	}
+
+	if operation.Op == POP {
+		if nargs != 0 {
+			if Verbose {
+				log.Output(1,"incorrect number of pop arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		operation.Detail = NewInstruction(POP)
+		return operation
+	}
+
+	if operation.Op == TRANSFORM {
+		if nargs != 7 {
+			if Verbose {
+				log.Output(1,"incorrect number of transform arguments")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		if !ValidName(tokens[1]) {
+			if Verbose {
+				log.Output(1,"invalid name")
+			}
+			return NewOperation(UNDEFINED)
+		}
+		args := [6]int16{}
+		for i := 2; i <= nargs; i++ {
+			x,err := strconv.ParseFloat(tokens[i],64)
+			if err != nil {
+				if Verbose {
+					log.Output(1,"invalid float "+tokens[i])
+				}
+				return NewOperation(UNDEFINED)
+			}
+			args[i-2] = f2i(x)
+		}
+		operation.Transform.a = args[0]
+		operation.Transform.b = args[1]
+		operation.Transform.c = args[2]
+		operation.Transform.d = args[3]
+		operation.Transform.x = args[4]
+		operation.Transform.y = args[5]
+		operation.Name = tokens[1]
+		operation.Detail.Op = TRANSFORM
+		return operation
+	}
 	return operation
 }

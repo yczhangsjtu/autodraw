@@ -30,36 +30,56 @@ func TestNewOperation(t *testing.T) {
 	}
 	operation = NewLineOperation(-1.0,-1.2,1.0,1.2)
 	if operation.Op != LINE || operation.Detail.Op != LINE ||
-		 reflect.DeepEqual(operation.Detail.Args,[4]int16{-100,-120,100,120}) {
-		t.Errorf("NewLineOperation(-1.0,-1.2,1.0,1.2) failed")
+		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-100,-120,100,120}) {
+		t.Errorf("NewLineOperation(-1.0,-1.2,1.0,1.2) failed, got %s %b",
+			OperationToString(operation))
 	}
 	operation = NewRectOperation(-2.0,-2.2,2.0,2.2)
 	if operation.Op != RECT || operation.Detail.Op != RECT ||
-		 reflect.DeepEqual(operation.Detail.Args,[4]int16{-200,-220,200,220}) {
-		t.Errorf("NewRectOperation(-2.0,-2.2,2.0,2.2) failed")
+		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-200,-220,200,220}) {
+		t.Errorf("NewRectOperation(-2.0,-2.2,2.0,2.2) failed, got %s",
+			OperationToString(operation))
 	}
 	operation = NewCircleOperation(-2.2,2.0,1.2)
 	if operation.Op != CIRCLE || operation.Detail.Op != CIRCLE ||
-		 reflect.DeepEqual(operation.Detail.Args,[3]int16{-220,200,120}) {
-		t.Errorf("NewCircleOperation(-2.2,2.0,1.2) failed")
+		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-220,200,120}) {
+		t.Errorf("NewCircleOperation(-2.2,2.0,1.2) failed, got %s",
+			OperationToString(operation))
 	}
 	operation = NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26)
 	if operation.Op != POLYGON || operation.Detail.Op != POLYGON ||
-		 reflect.DeepEqual(operation.Detail.Args,
-		 [6]int16{-221,242,123,114,455,126}) {
-		t.Errorf("NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26) failed")
+		 !reflect.DeepEqual(operation.Detail.Args,
+		 []int16{-221,242,123,114,455,126}) {
+		t.Errorf("NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26) failed, got %s",
+			OperationToString(operation))
 	}
 	operation = NewSetOperation("scale",1.1)
 	if operation.Op != SET || operation.Detail.Op != SET ||
-		 operation.Name != "scale" || reflect.DeepEqual(operation.Detail.Args,
-		 [1]int16{110}) {
-		t.Errorf("NewSetOperation(1.1) failed")
+		 operation.Name != "scale" || !reflect.DeepEqual(operation.Detail.Args,
+		 []int16{110}) {
+		t.Errorf("NewSetOperation(1.1) failed, got %s",OperationToString(operation))
 	}
 	operation = NewUseOperation("T",NewLineInstruction(0.0,0.0,-1.0,-1.0))
 	if operation.Op != USE || operation.Detail.Op != LINE ||
 		 operation.Name != "T" || !InstructionEqual(operation.Detail,
 			 NewLineInstruction(0.0,0.0,-1.0,-1.0)) {
-		t.Errorf("NewUseOperation(T,line) failed")
+		t.Errorf("NewUseOperation(T,line) failed, got %s",OperationToString(operation))
+	}
+	operation = NewPushOperation("T")
+	if operation.Op != PUSH || operation.Detail.Op != PUSH ||
+		 operation.Name != "T" || len(operation.Detail.Args)!=0 {
+		t.Errorf("NewPushOperation(T) failed, got %s",OperationToString(operation))
+	}
+	operation = NewPopOperation()
+	if operation.Op != POP || operation.Detail.Op != POP ||
+		 len(operation.Detail.Args)!=0 {
+		t.Errorf("NewPopOperation() failed, got %s",OperationToString(operation))
+	}
+	operation = NewTransformOperation("T",1.1,-0.1,0.1,-0.9,-2.0,0.0)
+	if operation.Op != TRANSFORM || operation.Detail.Op != TRANSFORM ||
+		 operation.Name != "T" || !reflect.DeepEqual(operation.Transform,
+		 NewTransform(1.1,-0.1,0.1,-0.9,-2.0,0.0)) {
+		t.Errorf("NewTransformOperation(T) failed, got %s",OperationToString(operation))
 	}
 }
 
@@ -138,5 +158,28 @@ func TestToString(t *testing.T) {
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"use",expect,operationStr)
+	}
+	operation = NewPushOperation("T")
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("push T push")
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"push",expect,operationStr)
+	}
+	operation = NewPopOperation()
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("pop pop")
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"pop",expect,operationStr)
+	}
+	operation = NewTransformOperation("T",1.1,-0.1,-0.1,1.1,0.0,0.0)
+	operationStr = OperationToString(operation)
+	expect = fmt.Sprintf("transform T [[%f,%f;%f,%f],[%f,%f]] transform",
+			float64(1.1),float64(-0.1),float64(-0.1),
+			float64(1.1),float64(0.0),float64(0.0))
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"transform",expect,operationStr)
 	}
 }

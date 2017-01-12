@@ -116,6 +116,33 @@ func NewSetOperation(name string,v float64) Operation {
 	return operation
 }
 
+func NewPushOperation(name string) Operation {
+	if !ValidName(name) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(PUSH)
+	operation.Name = name
+	operation.Detail = NewInstruction(PUSH)
+	return operation
+}
+
+func NewPopOperation() Operation {
+	operation := NewOperation(POP)
+	operation.Detail = NewInstruction(POP)
+	return operation
+}
+
+func NewTransformOperation(name string,a,b,c,d,x,y float64) Operation {
+	if !ValidName(name) {
+		return NewOperation(UNDEFINED)
+	}
+	operation := NewOperation(TRANSFORM)
+	operation.Name = name
+	operation.Transform = NewTransform(a,b,c,d,x,y)
+	operation.Detail = NewInstruction(TRANSFORM)
+	return operation
+}
+
 func NewUseOperation(name string,ins Instruction) Operation {
 	if !ValidName(name) {
 		return NewOperation(UNDEFINED)
@@ -134,6 +161,11 @@ func NewPolygonOperation(coords ...float64) Operation {
 	} else {
 		return NewOperation(UNDEFINED)
 	}
+}
+
+func NewTransform(a,b,c,d,x,y float64) Transform {
+	transform := Transform{f2i(a),f2i(b),f2i(c),f2i(d),f2i(x),f2i(y)}
+	return transform
 }
 
 func NewInstruction(op int16) Instruction {
@@ -186,11 +218,11 @@ func NewSetInstruction(name string,v float64) Instruction {
 }
 
 func HasTransform(op int16) bool {
-	return op == PUSH || op == POP || op == TRANSFORM
+	return op == TRANSFORM
 }
 
 func HasName(op int16) bool {
-	return op == USE || op == SET || op == TRANSFORM
+	return op == PUSH || op == POP || op == USE || op == SET || op == TRANSFORM
 }
 
 func ValidName(name string) bool {
