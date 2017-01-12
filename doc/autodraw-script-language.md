@@ -114,7 +114,7 @@ For example, if we already have defined the way to draw a plane
 
 ```
 begin plane
-*** blah ... plane is finished ***
+/* blah plane is finished */
 end
 ```
 
@@ -122,7 +122,7 @@ Now we want to draw a plane in an airport.
 We can do this by
 
 ```
-*** blah ... airport is finished ***
+/* blah ... airport is finished */
 draw plane
 ```
 
@@ -130,7 +130,7 @@ We want to draw more than one plane, in different places.
 We do this by applying different transformations.
 
 ```
-*** blah ... airport is finished ***
+/* blah ... airport is finished */
 draw plane
 translate T 1 0
 push T
@@ -142,15 +142,19 @@ draw plane
 pop
 ```
 
-Looks messy.
+Looks messy now.
 To simplify the repetation of pushing and poping matrices,
 we can allow `T` to be parameter of the operation.
 
 ```
-*** blah ... airport is finished ***
+/* blah ... airport is finished */
 draw plane
 translate T 1 0
-draw T plane
+use T draw plane
 translate T 2 0
-draw T plane
+use T draw plane
 ```
+
+## Function Parameters
+
+
