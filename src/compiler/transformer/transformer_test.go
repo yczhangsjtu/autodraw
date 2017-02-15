@@ -15,6 +15,7 @@
 package transformer
 
 import "testing"
+import "math"
 import "math/rand"
 
 func TestTransformCompose(t *testing.T) {
@@ -84,31 +85,27 @@ func TestRotateTransform(t *testing.T) {
 	ys := []float64 {
 		0.4,0.3,0.2,0.1,0.0,-0.9,-0.8,-0.7,-0.6,1.0,0.0,1.0,1.0,1.0,1.0,
 	}
-	txs := []float64 {
-		0.06,0.14,0.23,0.33,0.44,1.0,1.04,1.06,1.03,-0.3,0.0,-0.91,-0.6,-0.14,0.0,
-	}
-	tys := []float64 {
-		0.41,0.33,0.28,0.25,0.24,-0.41,-0.16,0.09,0.33,1.38,0.0,-0.42,-0.8,-0.99,-1.0,
-	}
-	for i := 0; i < len(ts); i++ {
-		tx,ty := ApplyTransform(RotateTransform(ts[i]),xs[i],ys[i])
-		if txs[i] != tx || tys[i] != ty {
+	for i,tt := range ts {
+		tx,ty := ApplyTransform(RotateTransform(tt),xs[i],ys[i])
+		txs := math.Cos(tt)*xs[i]-math.Sin(tt)*ys[i]
+		tys := math.Sin(tt)*xs[i]+math.Cos(tt)*ys[i]
+		if txs != tx || tys != ty {
 			t.Errorf("Rotate %f on [%f,%f], expect [%f,%f], got [%f,%f]",
-				ts[i],xs[i],ys[i],txs[i],tys[i],tx,ty)
+				tt,xs[i],ys[i],txs,tys,tx,ty)
 		}
 	}
 }
 
 func TestTranslateTransform(t *testing.T) {
 	for i := 0; i < 100; i++ {
-		x0 := i2f(int16(rand.Int31())/2)
-		y0 := i2f(int16(rand.Int31())/2)
-		dx := i2f(int16(rand.Int31())/2)
-		dy := i2f(int16(rand.Int31())/2)
+		x0 := rand.Float64()
+		y0 := rand.Float64()
+		dx := rand.Float64()
+		dy := rand.Float64()
 		x1,y1 := ApplyTransform(TranslateTransform(dx,dy),x0,y0)
-		if x1 != round(x0+dx) || y1 != round(y0+dy) {
+		if x1 != x0+dx || y1 != y0+dy {
 			t.Errorf("Translate [%f,%f] by [%f,%f], expect [%f,%f], got [%f,%f]",
-				x0,y0,dx,dy,round(x0+dx),round(y0+dy),x1,y1)
+				x0,y0,dx,dy,x0+dx,y0+dy,x1,y1)
 		}
 	}
 }
