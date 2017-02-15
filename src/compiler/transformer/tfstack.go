@@ -15,7 +15,7 @@
 package transformer
 
 type TFStack struct {
-	stack []Transform
+	stack []*Transform
 }
 
 func NewTFStack() TFStack {
@@ -26,18 +26,19 @@ func IsIdentity(tfstack *TFStack) bool {
 	return len(tfstack.stack) == 0
 }
 
-func GetTransform(tfstack *TFStack) Transform {
+func GetTransform(tfstack *TFStack) *Transform {
 	if len(tfstack.stack) == 0 {
-		return IdentityTransform()
+		identity := IdentityTransform()
+		return identity
 	}
 	return tfstack.stack[len(tfstack.stack)-1]
 }
 
-func PushTransform(tfstack *TFStack, tf Transform) {
+func PushTransform(tfstack *TFStack, tf *Transform) {
 	if len(tfstack.stack) == 0 {
 		tfstack.stack = append(tfstack.stack,tf)
 	} else {
-		tf = TransformCompose(GetTransform(tfstack),tf)
+		tf = GetTransform(tfstack).Compose(tf)
 		tfstack.stack = append(tfstack.stack,tf)
 	}
 }

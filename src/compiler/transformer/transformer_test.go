@@ -26,25 +26,25 @@ func TestTransformCompose(t *testing.T) {
 	tf5 := NewTransform(1.5,-0.1,0.0,0.0,1.5,0.0)
 	tf6 := NewTransform(2.25,0.0,0.0,0.0,2.25,0.0)
 
-	tf12 := TransformCompose(tf1,tf2)
-	if !TransformEqual(tf12,tf2) {
-		t.Errorf("Expect\n %s.%s=%s, got %s",TransformToString(tf1),
-			TransformToString(tf2),TransformToString(tf2),TransformToString(tf12))
+	tf12 := tf1.Compose(tf2)
+	if !tf12.Equal(tf2) {
+		t.Errorf("Expect\n %s.%s=%s, got %s",tf1.ToString(),
+			tf2.ToString(),tf2.ToString(),tf12.ToString())
 	}
-	tf13 := TransformCompose(tf1,tf3)
-	if !TransformEqual(tf13,tf3) {
-		t.Errorf("Expect\n %s.%s=%s, got %s",TransformToString(tf1),
-			TransformToString(tf3),TransformToString(tf3),TransformToString(tf13))
+	tf13 := tf1.Compose(tf3)
+	if !tf13.Equal(tf3) {
+		t.Errorf("Expect\n %s.%s=%s, got %s",tf1.ToString(),
+			tf3.ToString(),tf3.ToString(),tf13.ToString())
 	}
-	tf23 := TransformCompose(tf2,tf3)
-	if !TransformEqual(tf23,tf4) {
-		t.Errorf("Expect\n %s.%s=%s, got %s",TransformToString(tf2),
-			TransformToString(tf3),TransformToString(tf4),TransformToString(tf23))
+	tf23 := tf2.Compose(tf3)
+	if !tf23.Equal(tf4) {
+		t.Errorf("Expect\n %s.%s=%s, got %s",tf2.ToString(),
+			tf3.ToString(),tf4.ToString(),tf23.ToString())
 	}
-	tf35 := TransformCompose(tf3,tf5)
-	if !TransformEqual(tf35,tf6) {
-		t.Errorf("Expect\n %s.%s=%s, got %s",TransformToString(tf3),
-			TransformToString(tf5),TransformToString(tf6),TransformToString(tf35))
+	tf35 := tf3.Compose(tf5)
+	if !tf35.Equal(tf6) {
+		t.Errorf("Expect\n %s.%s=%s, got %s",tf3.ToString(),
+			tf5.ToString(),tf6.ToString(),tf35.ToString())
 	}
 }
 
@@ -57,21 +57,21 @@ func BenchmarkTransformCompose(b *testing.B) {
 	tf6 := NewTransform(2.25,0.0,0.0,0.0,2.25,0.0)
 
 	for i := 0; i < b.N; i++ {
-		TransformCompose(tf1,tf2)
-		TransformCompose(tf1,tf3)
-		TransformCompose(tf1,tf4)
-		TransformCompose(tf1,tf5)
-		TransformCompose(tf1,tf6)
-		TransformCompose(tf2,tf3)
-		TransformCompose(tf2,tf4)
-		TransformCompose(tf2,tf5)
-		TransformCompose(tf2,tf6)
-		TransformCompose(tf3,tf4)
-		TransformCompose(tf3,tf5)
-		TransformCompose(tf3,tf6)
-		TransformCompose(tf4,tf5)
-		TransformCompose(tf4,tf6)
-		TransformCompose(tf5,tf6)
+		tf1.Compose(tf2)
+		tf1.Compose(tf3)
+		tf1.Compose(tf4)
+		tf1.Compose(tf5)
+		tf1.Compose(tf6)
+		tf2.Compose(tf3)
+		tf2.Compose(tf4)
+		tf2.Compose(tf5)
+		tf2.Compose(tf6)
+		tf3.Compose(tf4)
+		tf3.Compose(tf5)
+		tf3.Compose(tf6)
+		tf4.Compose(tf5)
+		tf4.Compose(tf6)
+		tf5.Compose(tf6)
 	}
 }
 
@@ -86,7 +86,7 @@ func TestRotateTransform(t *testing.T) {
 		0.4,0.3,0.2,0.1,0.0,-0.9,-0.8,-0.7,-0.6,1.0,0.0,1.0,1.0,1.0,1.0,
 	}
 	for i,tt := range ts {
-		tx,ty := ApplyTransform(RotateTransform(tt),xs[i],ys[i])
+		tx,ty := RotateTransform(tt).Apply(xs[i],ys[i])
 		txs := math.Cos(tt)*xs[i]-math.Sin(tt)*ys[i]
 		tys := math.Sin(tt)*xs[i]+math.Cos(tt)*ys[i]
 		if txs != tx || tys != ty {
@@ -102,7 +102,7 @@ func TestTranslateTransform(t *testing.T) {
 		y0 := rand.Float64()
 		dx := rand.Float64()
 		dy := rand.Float64()
-		x1,y1 := ApplyTransform(TranslateTransform(dx,dy),x0,y0)
+		x1,y1 := TranslateTransform(dx,dy).Apply(x0,y0)
 		if x1 != x0+dx || y1 != y0+dy {
 			t.Errorf("Translate [%f,%f] by [%f,%f], expect [%f,%f], got [%f,%f]",
 				x0,y0,dx,dy,x0+dx,y0+dy,x1,y1)
