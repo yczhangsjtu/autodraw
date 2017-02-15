@@ -18,8 +18,8 @@ type TFStack struct {
 	stack []*Transform
 }
 
-func NewTFStack() TFStack {
-	return TFStack{}
+func NewTFStack() *TFStack {
+	return new(TFStack)
 }
 
 func IsIdentity(tfstack *TFStack) bool {

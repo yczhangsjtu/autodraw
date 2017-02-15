@@ -18,42 +18,86 @@ import "log"
 import "compiler/operation"
 import "compiler/transformer"
 
-type Operation operation.Operation
 type Transformer transformer.Transform
-type VarTable map[string] float64
+type VarTable map[string] int16
+type TFTable map[string] Transformer
 
 type FSM struct {
-	tfstack transformer.TFStack
-	vartable VarTable
+	tfstack *transformer.TFStack
+	vartable *VarTable
+	tftable *TFTable
 }
 
-func f2i(f float64) int16 {
-	if f > 0.0 {
-		return int16(f*100.0+0.5)
-	} else {
-		return int16(f*100.0-0.5)
-	}
+type FSMError struct {
+	oper string
+	reason string
 }
 
-func i2f(i int16) float64 {
-	return float64(i)/100.0;
+type VartableError struct {
+	reason string
 }
 
-func NewVarTable() VarTable {
-	return make(VarTable)
+func NewVartableError(reason string) *VartableError {
+	e := VartableError{reason}
+	return &e
 }
 
-func NewFSM() FSM {
-	fsm := FSM{transformer.NewTFStack(),NewVarTable()}
+func NewFSMError(oper string, reason string) *FSMError {
+	e := FSMError{oper,reason}
+	return &e
+}
+
+func (e *FSMError) Error() string {
+	return "FSM error: " + e.oper+ ": " + e.reason
+}
+
+func (e *VartableError) Error() string {
+	return "Vartable error: " + e.reason
+}
+
+func NewVarTable() *VarTable {
+	return &VarTable{}
+}
+
+func NewTFTable() *TFTable {
+	return new(TFTable)
+}
+
+func NewFSM() *FSM {
+	fsm := new(FSM)
+	fsm.tfstack = transformer.NewTFStack()
+	fsm.vartable = NewVarTable()
+	fsm.tftable = NewTFTable()
 	return fsm
 }
 
-func Update(fsm *FSM, oper Operation) {
-	switch oper.Op {
+func (vartable *VarTable) Assign(name string, v operation.Value) error {
+	if v.Type == operation.VARIABLE {
+		value,ok := (*vartable)[v.Name]
+		if !ok {
+			return NewVartableError("Undefined variable: "+v.Name)
+		}
+		(*vartable)[name] = value
+		return nil
+	} else if v.Type == operation.INTEGER {
+		(*vartable)[name] = v.Number
+		return nil
+	}
+	return NewVartableError("Invalid value: "+v.ToString())
+}
+
+func (fsm *FSM) Lookup(name string) (int16,bool) {
+	value,ok := (*fsm.vartable)[name]
+	return value,ok
+}
+
+func (fsm *FSM) Update(oper operation.Operation) error {
+	switch oper.Command {
 	case operation.UNDEFINED:
 		if operation.Verbose {
 			log.Output(1,"Undefined operation")
 		}
+		return NewFSMError(oper.ToString(),"undefined operation")
 	case operation.LINE:
 		fallthrough
 	case operation.RECT:
@@ -63,8 +107,12 @@ func Update(fsm *FSM, oper Operation) {
 	case operation.OVAL:
 		fallthrough
 	case operation.POLYGON:
-		return
+		return nil
 	case operation.SET:
-		fsm.vartable[oper.Name] = i2f(oper.Detail.Args[0])
+		err := fsm.vartable.Assign(oper.Name,oper.Args[0])
+		if err != nil {
+			return NewFSMError(oper.ToString(),err.Error())
+		}
 	}
+	return nil
 }
