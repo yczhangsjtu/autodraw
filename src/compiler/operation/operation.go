@@ -147,7 +147,7 @@ func newOperationTypeDrawFixed(op int16, args ...Value) Operation {
 
 func newOperationTypeDrawNondetermined(op int16, args ...Value) Operation {
 	operation := NewOperation(op)
-	operation.Args = append([]Value{NewNumberValue(int16(len(args)))},args...)
+	operation.Args = args
 	return operation
 }
 
@@ -285,8 +285,9 @@ func (v *Value) Print() {
 			fmt.Printf("%f",float64(v.Number)/100.0)
 		case VARIABLE:
 			fmt.Printf("%s",v.Name)
+		default:
+			fmt.Printf("undefined")
 	}
-	fmt.Printf("undefined")
 }
 
 func ValuesPrint(vs []Value) {

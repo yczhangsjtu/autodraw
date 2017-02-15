@@ -180,11 +180,7 @@ func (parser *LineParser) Digest() (Operation,error) {
 			op.Name = parser.name
 		}
 		if parser.expectArgs > 0 || parser.needArgNum {
-			if parser.needArgNum {
-				op.Args = append([]Value{NewNumberValue(int16(len(parser.args)))},parser.args...)
-			} else {
-				op.Args = parser.args
-			}
+			op.Args = parser.args
 		}
 		return op,nil
 	}

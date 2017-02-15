@@ -49,7 +49,7 @@ func TestNewOperation(t *testing.T) {
 	}
 	operation = NewPolygonOperation(NewNumberValues(-221,242,123,114,455,126)...)
 	if operation.Command != POLYGON || operation.Name != "" ||
-		 !reflect.DeepEqual(operation.Args, NewNumberValues(6,-221,242,123,114,455,126)) {
+		 !reflect.DeepEqual(operation.Args, NewNumberValues(-221,242,123,114,455,126)) {
 		t.Errorf("NewPolygonOperation(-221,242,123,114,455,126) failed, got %s",
 			operation.ToString())
 	}
@@ -125,7 +125,7 @@ func TestToString(t *testing.T) {
 	}
 	operation = NewPolygonOperation(NewNumberValues(-221,242,113,123,455,126)...)
 	operationStr = operation.ToString()
-	expect = fmt.Sprintf("polygon [%d,%d,%d,%d,%d,%d,%d]",6,-221,242,113,123,455,126)
+	expect = fmt.Sprintf("polygon [%d,%d,%d,%d,%d,%d]",-221,242,113,123,455,126)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"polygon",expect,operationStr)

@@ -50,8 +50,12 @@ func main() {
 
 	operation.Verbose = verbose
 
-	oper := operation.Parse("polygon 0.0 0.0 1.0 0.0 1.0 1.1 0.0 1.0")
-	operation.OperationPrint(oper)
+	parser := operation.NewLineParser()
+	oper,err := parser.ParseLine("polygon 0 0 100 0 100 110 0 100")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	oper.Print()
 	fmt.Println("")
 
 }
