@@ -77,7 +77,7 @@ func (vartable *VarTable) Assign(name string, v operation.Value) error {
 		}
 		(*vartable)[name] = value
 		return nil
-	} else if v.Type == operation.INTEGER || v.Type == operation.TRANSFORMER{
+	} else if v.Type == operation.INTEGER || v.Type == operation.TRANSFORMER {
 		(*vartable)[name] = v
 		return nil
 	}
@@ -86,7 +86,8 @@ func (vartable *VarTable) Assign(name string, v operation.Value) error {
 
 func (fsm *FSM) Lookup(name string) (operation.Value,bool) {
 	value,ok := (*fsm.vartable)[name]
-	return value,ok && value.Type == operation.INTEGER
+	return value,ok && (value.Type == operation.INTEGER ||
+		value.Type == operation.TRANSFORMER)
 }
 
 func (fsm *FSM) LookupValues(args []operation.Value) ([]int16,bool) {
@@ -94,7 +95,7 @@ func (fsm *FSM) LookupValues(args []operation.Value) ([]int16,bool) {
 	for i,v := range args {
 		if v.Type == operation.VARIABLE {
 			value,ok := fsm.Lookup(v.Name)
-			if !ok {
+			if !ok || v.Type != operation.INTEGER {
 				return result,false
 			}
 			result[i] = value.Number

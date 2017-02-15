@@ -31,9 +31,15 @@ func TestFSMUpdate(t *testing.T) {
 		"set Carror -10",
 		"set Bob Carror",
 		"set Carror Alice",
+		"transform T 100 0 0 0 100 0",
+		"set Q T",
+		"set P Q",
 	}
 	results := map[string] int16 {
 		"Alice":25, "Bob":-10, "Carror":25,
+	}
+	transforms := []string {
+		"T","P","Q",
 	}
 	for _,line := range tests {
 		parser := operation.NewLineParser()
@@ -49,10 +55,19 @@ func TestFSMUpdate(t *testing.T) {
 	for k,v := range results {
 		value,ok := fsm.Lookup(k)
 		if !ok {
-			t.Errorf("%s not found",value)
+			t.Errorf("%s not found",k)
 		}
 		if value.Number != v {
-			t.Errorf("Expect %s = %d, got %d",k,v,value)
+			t.Errorf("Expect %s = %d, got %d",k,v,value.Number)
+		}
+	}
+	for _,tf := range transforms {
+		value,ok := fsm.Lookup(tf)
+		if !ok {
+			t.Errorf("transform %s not found",tf)
+		}
+		if value.Type != operation.TRANSFORMER {
+			t.Errorf("%s is not transform",tf)
 		}
 	}
 }
