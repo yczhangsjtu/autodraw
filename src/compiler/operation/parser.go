@@ -66,7 +66,7 @@ func StringToValue(token string) (Value,error) {
 	}
 	i,err := strconv.ParseInt(token,10,16)
 	if err != nil {
-		return Value{NAN,"",0},err
+		return Value{NAN,"",0,nil},err
 	}
 	return NewNumberValue(int16(i)),nil
 }

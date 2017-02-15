@@ -30,7 +30,7 @@ func NewTransform(t11,t12,t13,t21,t22,t23 float64) *Transform {
 	return &transform
 }
 
-func (tf *Transform) PrintTransform() {
+func (tf *Transform) Print() {
 	fmt.Printf("[[%f,%f,%f]\n[%f,%f,%f]\n[%f,%f,%f]]\n",
 		tf.matrix[0][0],tf.matrix[0][1],tf.matrix[0][2],
 		tf.matrix[1][0],tf.matrix[1][1],tf.matrix[1][2],

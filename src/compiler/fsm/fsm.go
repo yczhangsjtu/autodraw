@@ -14,18 +14,17 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package fsm
 
-import "log"
 import "compiler/operation"
 import "compiler/transformer"
 
-type Transformer transformer.Transform
-type VarTable map[string] int16
-type TFTable map[string] Transformer
+type VarTable map[string] operation.Value
+type TFTable map[string] *transformer.Transform
 
 type FSM struct {
 	tfstack *transformer.TFStack
 	vartable *VarTable
-	tftable *TFTable
+
+	tmptransform *transformer.Transform
 }
 
 type FSMError struct {
@@ -60,14 +59,13 @@ func NewVarTable() *VarTable {
 }
 
 func NewTFTable() *TFTable {
-	return new(TFTable)
+	return &TFTable{}
 }
 
 func NewFSM() *FSM {
 	fsm := new(FSM)
 	fsm.tfstack = transformer.NewTFStack()
 	fsm.vartable = NewVarTable()
-	fsm.tftable = NewTFTable()
 	return fsm
 }
 
@@ -79,24 +77,39 @@ func (vartable *VarTable) Assign(name string, v operation.Value) error {
 		}
 		(*vartable)[name] = value
 		return nil
-	} else if v.Type == operation.INTEGER {
-		(*vartable)[name] = v.Number
+	} else if v.Type == operation.INTEGER || v.Type == operation.TRANSFORMER{
+		(*vartable)[name] = v
 		return nil
 	}
 	return NewVartableError("Invalid value: "+v.ToString())
 }
 
-func (fsm *FSM) Lookup(name string) (int16,bool) {
+func (fsm *FSM) Lookup(name string) (operation.Value,bool) {
 	value,ok := (*fsm.vartable)[name]
-	return value,ok
+	return value,ok && value.Type == operation.INTEGER
+}
+
+func (fsm *FSM) LookupValues(args []operation.Value) ([]int16,bool) {
+	result := make([]int16,len(args))
+	for i,v := range args {
+		if v.Type == operation.VARIABLE {
+			value,ok := fsm.Lookup(v.Name)
+			if !ok {
+				return result,false
+			}
+			result[i] = value.Number
+		} else if v.Type == operation.INTEGER {
+			result[i] = v.Number
+		} else {
+			return result,false
+		}
+	}
+	return result,true
 }
 
 func (fsm *FSM) Update(oper operation.Operation) error {
 	switch oper.Command {
 	case operation.UNDEFINED:
-		if operation.Verbose {
-			log.Output(1,"Undefined operation")
-		}
 		return NewFSMError(oper.ToString(),"undefined operation")
 	case operation.LINE:
 		fallthrough
@@ -113,6 +126,36 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 		if err != nil {
 			return NewFSMError(oper.ToString(),err.Error())
 		}
+	case operation.USE:
+		value,ok := fsm.Lookup(oper.Name)
+		if ok {
+			if value.Type == operation.TRANSFORMER {
+				fsm.tmptransform = value.Transform
+			} else {
+				return NewFSMError(oper.ToString()," "+oper.Name+" is not transform ")
+			}
+		} else {
+			return NewFSMError(oper.ToString(),"undefined transform "+oper.Name)
+		}
+	case operation.PUSH:
+	case operation.POP:
+	case operation.TRANSFORM:
+		tfvalues,ok := fsm.LookupValues(oper.Args)
+		if !ok {
+			return NewFSMError(oper.ToString(),"invalid transform arguments")
+		}
+		fsm.vartable.Assign(oper.Name,operation.NewTransformValue(ArgsToTransform(tfvalues)))
+	case operation.DRAW:
+	case operation.IMPORT:
+	case operation.BEGIN:
+	case operation.END:
 	}
 	return nil
+}
+
+func ArgsToTransform(args []int16) *transformer.Transform {
+	return transformer.NewTransform(
+		float64(args[0])/100.0,float64(args[1])/100.0,float64(args[2]),
+		float64(args[3])/100.0,float64(args[4])/100.0,float64(args[5]),
+	)
 }

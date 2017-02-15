@@ -28,6 +28,12 @@ func TestFSMUpdate(t *testing.T) {
 		"set Bob 20",
 		"set Bob Alice",
 		"set Alice 25",
+		"set Carror -10",
+		"set Bob Carror",
+		"set Carror Alice",
+	}
+	results := map[string] int16 {
+		"Alice":25, "Bob":-10, "Carror":25,
 	}
 	for _,line := range tests {
 		parser := operation.NewLineParser()
@@ -40,18 +46,13 @@ func TestFSMUpdate(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 	}
-	alice,ok := fsm.Lookup("Alice")
-	if !ok {
-		t.Errorf("alice not found")
-	}
-	if alice != 25 {
-		t.Errorf("Expect alice = 25, got %d",alice)
-	}
-	bob,ok := fsm.Lookup("Bob")
-	if !ok {
-		t.Errorf("bob not found")
-	}
-	if bob != 15 {
-		t.Errorf("Expect bob = 15, got %d",bob)
+	for k,v := range results {
+		value,ok := fsm.Lookup(k)
+		if !ok {
+			t.Errorf("%s not found",value)
+		}
+		if value.Number != v {
+			t.Errorf("Expect %s = %d, got %d",k,v,value)
+		}
 	}
 }

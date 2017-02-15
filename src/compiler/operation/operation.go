@@ -18,6 +18,7 @@ import "os"
 import "fmt"
 import "reflect"
 import "unicode"
+import "compiler/transformer"
 
 // Operations
 const (
@@ -42,7 +43,7 @@ const (
 const (
 	VARIABLE int16 = iota
 	INTEGER
-	FLOAT
+	TRANSFORMER
 	NAN
 )
 
@@ -92,6 +93,7 @@ type Value struct {
 	Type int16
 	Name string
 	Number int16
+	Transform *transformer.Transform
 }
 
 type Operation struct {
@@ -115,22 +117,26 @@ func NeedArgNum(op int16) bool {
 }
 
 func NewNumberValue(x int16) Value {
-	return Value{INTEGER,"",x}
+	return Value{INTEGER,"",x,nil}
 }
 
 func NewNumberValues(args ...int16) []Value {
 	ret := make([]Value,len(args))
 	for i,_ := range ret {
-		ret[i] = Value{INTEGER,"",args[i]}
+		ret[i] = Value{INTEGER,"",args[i],nil}
 	}
 	return ret
 }
 
 func NewVariableValue(name string) Value {
 	if ValidName(name) {
-		return Value{VARIABLE,name,0}
+		return Value{VARIABLE,name,0,nil}
 	}
-	return Value{NAN,"",0}
+	return Value{NAN,"",0,nil}
+}
+
+func NewTransformValue(tf *transformer.Transform) Value {
+	return Value{TRANSFORMER,"",0,tf}
 }
 
 func NewOperation(op int16) Operation {
@@ -247,11 +253,6 @@ func NewUseOperation(name string) Operation {
 	return newOperationTypeState(USE,name)
 }
 
-func HasName(op int16) bool {
-	return op == PUSH || op == POP || op == USE || op == SET ||
-		op == TRANSFORM || op == DRAW || op == IMPORT
-}
-
 func ValidName(name string) bool {
 	if len(name) == 0 {
 		return false
@@ -281,8 +282,8 @@ func (v *Value) Print() {
 	switch v.Type {
 		case INTEGER:
 			fmt.Printf("%d",v.Number)
-		case FLOAT:
-			fmt.Printf("%f",float64(v.Number)/100.0)
+		case TRANSFORMER:
+			v.Transform.Print()
 		case VARIABLE:
 			fmt.Printf("%s",v.Name)
 		default:
@@ -316,8 +317,8 @@ func (v *Value) ToString() string {
 	switch v.Type {
 		case INTEGER:
 			return fmt.Sprintf("%d",v.Number)
-		case FLOAT:
-			return fmt.Sprintf("%f",float64(v.Number)/100.0)
+		case TRANSFORMER:
+			return v.Transform.ToString()
 		case VARIABLE:
 			return fmt.Sprintf("%s",v.Name)
 	}
