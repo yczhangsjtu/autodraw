@@ -14,74 +14,71 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
-import "fmt"
 import "testing"
 
-func BenchmarkParse(b *testing.B) {
+func BenchmarkParseLine(b *testing.B) {
 	tests := []string {
 		"undefined",
-		"line 1.2 3.0 1.1 3.1",
-		"rect 1.1 0.0 0.0 1.1",
-		"polygon 1.1 1.0 0.0 0.1 2.1 2.2",
-		"circle 1.1 1.1 1.0",
-		"oval 1.1 1.1 1.0 0.5 0.5",
-		"set scale 1.1",
-		"use T line 1.2 3.0 1.1 3.1",
+		"line 120 300 110 310",
+		"rect 110 0 0 110",
+		"polygon 110 100 0 10 210 220",
+		"circle 110 110 100",
+		"oval 110 110 100 50 50",
+		"set scale 110",
+		"use T",
 		"push T",
 		"pop",
-		"transform T -1.0 0.1 -0.1 1.0 2.0 2.0",
+		"transform T -100 10 -10 100 200 200",
 		"draw plane",
-		"import plane.adr",
-		"import no-plane.adr",
-		"line 1.2 3.0 1.1",
-		"rect 1.1 0.0 0.0",
-		"polygon 1.1 1.0 0.0 0.1 2.2",
-		"circle 1.1 1.1",
+		"import plane",
+		"import no-plane",
+		"line 120 300 110",
+		"rect 110 0 0",
+		"circle 110 110",
 	}
 	for i := 0; i < b.N; i++ {
 		for _,test := range tests {
-			Parse(test)
+			parser := NewLineParser()
+			parser.ParseLine(test)
 		}
 	}
 }
 
-func TestParse(t *testing.T) {
+func TestParseLine(t *testing.T) {
 	Verbose = false
 	tests := []string {
 		"undefined",
-		"line 1.2 3.0 1.1 3.1",
-		"rect 1.1 0.0 0.0 1.1",
-		"polygon 1.1 1.0 0.0 0.1 2.1 2.2",
-		"circle 1.1 1.1 1.0",
-		"oval 1.1 1.1 1.0 0.5 0.5",
-		"set scale 1.1",
-		"use T line 1.2 3.0 1.1 3.1",
+		"line 120 300 110 310",
+		"rect 110 0 0 110",
+		"polygon 110 100 0 10 210 220",
+		"circle 110 110 100",
+		"oval 110 110 100 50 50",
+		"set scale 110",
+		"use T",
 		"push T",
 		"pop",
-		"transform T -1.0 0.1 -0.1 1.0 2.0 2.0",
+		"transform T -100 10 -10 100 200 200",
 		"draw plane",
-		"import plane.adr",
-		"import no-plane.adr",
-		"line 1.2 3.0 1.1",
-		"rect 1.1 0.0 0.0",
-		"polygon 1.1 1.0 0.0 0.1 2.2",
-		"circle 1.1 1.1",
+		"import plane",
+		"import no-plane",
+		"line 120 300 110",
+		"rect 110 0 0",
+		"circle 110 110",
 	}
 	expects := []Operation{
 		NewOperation(UNDEFINED),
-		NewLineOperation(1.2,3.0,1.1,3.1),
-		NewRectOperation(1.1,0.0,0.0,1.1),
-		NewPolygonOperation(1.1,1.0,0.0,0.1,2.1,2.2),
-		NewCircleOperation(1.1,1.1,1.0),
-		NewOvalOperation(1.1,1.1,1.0,0.5,0.5),
-		NewSetOperation("scale",1.1),
-		NewUseOperation("T",NewLineInstruction(1.2,3.0,1.1,3.1)),
+		NewLineOperation(NewNumberValues(120,300,110,310)...),
+		NewRectOperation(NewNumberValues(110,0,0,110)...),
+		NewPolygonOperation(NewNumberValues(110,100,0,10,210,220)...),
+		NewCircleOperation(NewNumberValues(110,110,100)...),
+		NewOvalOperation(NewNumberValues(110,110,100,50,50)...),
+		NewSetOperation("scale",NewNumberValue(110)),
+		NewUseOperation("T"),
 		NewPushOperation("T"),
 		NewPopOperation(),
-		NewTransformOperation("T",-1.0,0.1,-0.1,1.0,2.0,2.0),
+		NewTransformOperation("T",NewNumberValues(-100,10,-10,100,200,200)...),
 		NewDrawOperation("plane"),
-		NewImportOperation("plane.adr"),
-		NewOperation(UNDEFINED),
+		NewImportOperation("plane"),
 		NewOperation(UNDEFINED),
 		NewOperation(UNDEFINED),
 		NewOperation(UNDEFINED),
@@ -89,14 +86,15 @@ func TestParse(t *testing.T) {
 	}
 
 	for i,test := range tests {
-		result := Parse(test)
-		if !OperationEqual(expects[i],result) {
-			t.Errorf("Parser failed for [%s], expect (%s), got (%s)\n",
-							test,OperationToString(expects[i]),OperationToString(result))
-			OperationPrint(expects[i])
-			fmt.Print(" vs. ")
-			OperationPrint(result)
-			fmt.Println("")
+		parser := NewLineParser()
+		result,err := parser.ParseLine(test)
+		if !expects[i].Equal(result) || result.Command != UNDEFINED && err != nil {
+			errorString := ""
+			if err != nil {
+				errorString = err.Error()
+			}
+			t.Errorf("Parser failed for [%s], expect (%s), got (%s): %s\n",
+							test,expects[i].ToString(),result.ToString(),errorString)
 		}
 	}
 }

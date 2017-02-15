@@ -19,6 +19,7 @@ import "fmt"
 import "reflect"
 import "unicode"
 
+// Operations
 const (
 	UNDEFINED int16 = iota
 	LINE
@@ -33,215 +34,217 @@ const (
 	TRANSFORM
 	DRAW
 	IMPORT
+	BEGIN
+	END
+)
+
+// Value types
+const (
+	VARIABLE int16 = iota
+	INTEGER
+	FLOAT
+	NAN
+)
+
+// Operation types
+const (
+	NOT_OPERATION int16 = iota
+	DRAW_FIXED
+	DRAW_UNDETERMINED
+	ASSIGN
+	SINGLE
+	STATE
 )
 
 const Version string = "1.0"
 
 var OperationNames = []string {
 	"undefined","line","rect","circle","oval","polygon","set","use",
-	"push","pop","transform","draw","import",
+	"push","pop","transform","draw","import","begin","end",
+}
+
+var OperationTypes = []int16 {
+	NOT_OPERATION,DRAW_FIXED,DRAW_FIXED,DRAW_FIXED,DRAW_FIXED,DRAW_UNDETERMINED,
+	ASSIGN,STATE,STATE,SINGLE,ASSIGN,STATE,STATE,STATE,SINGLE,
+}
+
+var expectName = []bool {
+	false,false,false,true,false,true,
+}
+
+var expectArgs = []int16 {
+	0,4,4,3,5,0,1,0,
+	0,0,6,0,0,0,0,
+}
+
+var needArgNum = []bool {
+	false,false,true,false,false,false,
 }
 
 var OperationNameMap = map[string] int16 {
 	"undefined":UNDEFINED, "line":LINE, "rect":RECT, "circle":CIRCLE,
 	"oval":OVAL, "polygon":POLYGON, "set":SET, "use":USE, "push":PUSH,
-	"pop":POP, "transform":TRANSFORM,"draw":DRAW,"import":IMPORT,
+	"pop":POP, "transform":TRANSFORM,"draw":DRAW,"import":IMPORT,"begin":BEGIN,
+	"end":END,
 }
 
-type Instruction struct {
-	Op int16
-	Args []int16
-}
-
-type Transform struct {
-	a,b,c,d,x,y int16
+type Value struct {
+	Type int16
+	Name string
+	Number int16
 }
 
 type Operation struct {
-	Op int16
+	Command int16
 	Name string
-	Transform Transform
-	Detail Instruction
+	Args []Value
 }
 
 var Verbose bool = false
 
-func f2i(f float64) int16 {
-	if f > 0.0 {
-		return int16(f*100.0+0.5)
-	} else {
-		return int16(f*100.0-0.5)
-	}
+func ExpectName(op int16) bool {
+	return expectName[OperationTypes[op]]
 }
 
-func i2f(i int16) float64 {
-	return float64(i)/100.0;
+func ExpectArgs(op int16) int16 {
+	return expectArgs[op]
+}
+
+func NeedArgNum(op int16) bool {
+	return needArgNum[OperationTypes[op]]
+}
+
+func NewNumberValue(x int16) Value {
+	return Value{INTEGER,"",x}
+}
+
+func NewNumberValues(args ...int16) []Value {
+	ret := make([]Value,len(args))
+	for i,_ := range ret {
+		ret[i] = Value{INTEGER,"",args[i]}
+	}
+	return ret
+}
+
+func NewVariableValue(name string) Value {
+	if ValidName(name) {
+		return Value{VARIABLE,name,0}
+	}
+	return Value{NAN,"",0}
 }
 
 func NewOperation(op int16) Operation {
 	operation := Operation{}
-	operation.Op = op
-	operation.Detail.Op = UNDEFINED
+	operation.Command = op
 	return operation
 }
 
-func NewLineOperation(x1,y1,x2,y2 float64) Operation {
-	operation := NewOperation(LINE)
-	operation.Detail = NewLineInstruction(x1,y1,x2,y2)
+func newOperationTypeDrawFixed(op int16, args ...Value) Operation {
+	operation := NewOperation(op)
+	operation.Args = args
 	return operation
 }
 
-func NewRectOperation(x1,y1,x2,y2 float64) Operation {
-	operation := NewOperation(RECT)
-	operation.Detail = NewRectInstruction(x1,y1,x2,y2)
+func newOperationTypeDrawNondetermined(op int16, args ...Value) Operation {
+	operation := NewOperation(op)
+	operation.Args = append([]Value{NewNumberValue(int16(len(args)))},args...)
 	return operation
 }
 
-func NewCircleOperation(x,y,r float64) Operation {
-	operation := NewOperation(CIRCLE)
-	operation.Detail = NewCircleInstruction(x,y,r)
-	return operation
-}
-
-func NewOvalOperation(x,y,a,b,r float64) Operation {
-	operation := NewOperation(OVAL)
-	operation.Detail = NewOvalInstruction(x,y,a,b,r)
-	return operation
-}
-
-func NewSetOperation(name string,v float64) Operation {
+func newOperationTypeAssign(op int16, name string, args ...Value) Operation {
 	if !ValidName(name) {
 		return NewOperation(UNDEFINED)
 	}
-	operation := NewOperation(SET)
+	operation := NewOperation(op)
 	operation.Name = name
-	operation.Detail = NewSetInstruction(name,v)
+	operation.Args = args
 	return operation
 }
 
-func NewPushOperation(name string) Operation {
+func newOperationTypeSingle(op int16) Operation {
+	operation := NewOperation(op)
+	return operation
+}
+
+func newOperationTypeState(op int16, name string) Operation {
 	if !ValidName(name) {
 		return NewOperation(UNDEFINED)
 	}
-	operation := NewOperation(PUSH)
+	operation := NewOperation(op)
 	operation.Name = name
-	operation.Detail = NewInstruction(PUSH)
 	return operation
 }
 
-func NewDrawOperation(name string) Operation {
-	if !ValidName(name) {
+func NewLineOperation(coords ...Value) Operation {
+	if len(coords) == 4 {
+		return newOperationTypeDrawFixed(LINE,coords...)
+	} else {
 		return NewOperation(UNDEFINED)
 	}
-	operation := NewOperation(DRAW)
-	operation.Name = name
-	operation.Detail = NewInstruction(DRAW)
-	return operation
 }
 
-func NewImportOperation(path string) Operation {
-	if !ValidPath(path) {
+func NewRectOperation(coords ...Value) Operation {
+	if len(coords) == 4 {
+		return newOperationTypeDrawFixed(RECT,coords...)
+	} else {
 		return NewOperation(UNDEFINED)
 	}
-	operation := NewOperation(IMPORT)
-	operation.Name = path
-	operation.Detail = NewInstruction(IMPORT)
-	return operation
+}
+
+func NewCircleOperation(coords ...Value) Operation {
+	if len(coords) == 3 {
+		return newOperationTypeDrawFixed(CIRCLE,coords...)
+	} else {
+		return NewOperation(UNDEFINED)
+	}
+}
+
+func NewOvalOperation(coords ...Value) Operation {
+	if len(coords) == 5 {
+		return newOperationTypeDrawFixed(OVAL,coords...)
+	} else {
+		return NewOperation(UNDEFINED)
+	}
+}
+
+func NewPolygonOperation(coords ...Value) Operation {
+	if len(coords) >= 4 && len(coords)%2 == 0 {
+		return newOperationTypeDrawNondetermined(POLYGON,coords...)
+	} else {
+		return NewOperation(UNDEFINED)
+	}
+}
+
+func NewSetOperation(name string,v Value) Operation {
+	return newOperationTypeAssign(SET,name,v)
+}
+
+func NewTransformOperation(name string,coords ...Value) Operation {
+	if len(coords) == 6 {
+		return newOperationTypeAssign(TRANSFORM,name,coords...)
+	} else {
+		return NewOperation(UNDEFINED)
+	}
 }
 
 func NewPopOperation() Operation {
-	operation := NewOperation(POP)
-	operation.Detail = NewInstruction(POP)
-	return operation
+	return newOperationTypeSingle(POP)
 }
 
-func NewTransformOperation(name string,a,b,c,d,x,y float64) Operation {
-	if !ValidName(name) {
-		return NewOperation(UNDEFINED)
-	}
-	operation := NewOperation(TRANSFORM)
-	operation.Name = name
-	operation.Transform = NewTransform(a,b,c,d,x,y)
-	operation.Detail = NewInstruction(TRANSFORM)
-	return operation
+func NewPushOperation(name string) Operation {
+	return newOperationTypeState(PUSH,name)
 }
 
-func NewUseOperation(name string,ins Instruction) Operation {
-	if !ValidName(name) {
-		return NewOperation(UNDEFINED)
-	}
-	operation := NewOperation(USE)
-	operation.Name = name
-	operation.Detail = ins
-	return operation
+func NewDrawOperation(name string) Operation {
+	return newOperationTypeState(DRAW,name)
 }
 
-func NewPolygonOperation(coords ...float64) Operation {
-	if len(coords) >= 4 && len(coords)%2 == 0 {
-		operation := NewOperation(POLYGON)
-		operation.Detail = NewPolygonInstruction(coords...)
-		return operation
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+func NewImportOperation(path string) Operation {
+	return newOperationTypeState(IMPORT,path)
 }
 
-func NewTransform(a,b,c,d,x,y float64) Transform {
-	transform := Transform{f2i(a),f2i(b),f2i(c),f2i(d),f2i(x),f2i(y)}
-	return transform
-}
-
-func NewInstruction(op int16) Instruction {
-	instruction := Instruction{}
-	instruction.Op = op
-	return instruction
-}
-
-func NewLineInstruction(x1,y1,x2,y2 float64) Instruction {
-	instruction := NewInstruction(LINE)
-	instruction.Args = []int16 {f2i(x1),f2i(y1),f2i(x2),f2i(y2)}
-	return instruction;
-}
-
-func NewRectInstruction(x1,y1,x2,y2 float64) Instruction {
-		instruction := NewInstruction(RECT)
-		instruction.Args = []int16 {f2i(x1),f2i(y1),f2i(x2),f2i(y2)}
-		return instruction;
-}
-
-func NewCircleInstruction(x,y,r float64) Instruction {
-		instruction := NewInstruction(CIRCLE)
-		instruction.Args = []int16 {f2i(x),f2i(y),f2i(r)}
-		return instruction;
-}
-
-func NewOvalInstruction(x,y,a,b,t float64) Instruction {
-		instruction := NewInstruction(OVAL)
-		instruction.Args = []int16 {f2i(x),f2i(y),f2i(a),f2i(b),f2i(t)}
-		return instruction;
-}
-
-func NewPolygonInstruction(coords ...float64) Instruction {
-	if len(coords) >= 4 && len(coords)%2 == 0 {
-		instruction := NewInstruction(POLYGON)
-		instruction.Args = make([]int16,len(coords));
-		for i,_ := range(coords) {
-			instruction.Args[i] = f2i(coords[i])
-		}
-		return instruction;
-	} else {
-		return NewInstruction(UNDEFINED)
-	}
-}
-
-func NewSetInstruction(name string,v float64) Instruction {
-		instruction := NewInstruction(SET)
-		instruction.Args = []int16 {f2i(v)}
-		return instruction;
-}
-
-func HasTransform(op int16) bool {
-	return op == TRANSFORM
+func NewUseOperation(name string) Operation {
+	return newOperationTypeState(USE,name)
 }
 
 func HasName(op int16) bool {
@@ -274,81 +277,76 @@ func ValidPath(path string) bool {
 	return true
 }
 
-func OperationPrint(op Operation) {
-	fmt.Printf("%s",OperationNames[op.Op])
-	if HasName(op.Op) && op.Name != "" {
+func (v *Value) Print() {
+	switch v.Type {
+		case INTEGER:
+			fmt.Printf("%d",v.Number)
+		case FLOAT:
+			fmt.Printf("%f",float64(v.Number)/100.0)
+		case VARIABLE:
+			fmt.Printf("%s",v.Name)
+	}
+	fmt.Printf("undefined")
+}
+
+func ValuesPrint(vs []Value) {
+	fmt.Printf("[")
+	for i,v := range vs {
+		if i > 0 {
+			fmt.Printf(",")
+		}
+		v.Print()
+	}
+	fmt.Printf("]")
+}
+
+func (op *Operation) Print() {
+	fmt.Printf("%s",OperationNames[op.Command])
+	if op.Name != "" {
 		fmt.Printf(" %s",op.Name)
 	}
-	if HasTransform(op.Op) {
-		fmt.Print(" ")
-		TransformPrint(op.Transform)
-	}
-	fmt.Print(" ")
-	InstructionPrint(op.Detail)
-}
-
-func TransformPrint(tf Transform) {
-	fmt.Printf("[[%f,%f;%f,%f],[%f,%f]]",i2f(tf.a),i2f(tf.b),i2f(tf.c),i2f(tf.d),
-		i2f(tf.x),i2f(tf.y))
-}
-
-func InstructionPrint(ins Instruction) {
-	fmt.Printf("%s",OperationNames[ins.Op])
-	for _,v := range ins.Args {
-		fmt.Printf(" %f",i2f(v))
+	if len(op.Args) > 0 {
+		fmt.Printf(" ")
+		ValuesPrint(op.Args)
 	}
 }
 
-func OperationToString(op Operation) string {
-	ret := fmt.Sprintf("%s",OperationNames[op.Op])
-	if HasName(op.Op) && op.Name != "" {
+func (v *Value) ToString() string {
+	switch v.Type {
+		case INTEGER:
+			return fmt.Sprintf("%d",v.Number)
+		case FLOAT:
+			return fmt.Sprintf("%f",float64(v.Number)/100.0)
+		case VARIABLE:
+			return fmt.Sprintf("%s",v.Name)
+	}
+	return fmt.Sprintf("undefined")
+}
+
+func ValuesToString(vs []Value) string {
+	ret := "["
+	for i,v := range vs {
+		if i > 0 {
+			ret += ","
+		}
+		ret += v.ToString()
+	}
+	ret += "]"
+	return ret
+}
+
+func (op *Operation)ToString() string {
+	ret := fmt.Sprintf("%s",OperationNames[op.Command])
+	if op.Name != "" {
 		ret += fmt.Sprintf(" %s",op.Name)
 	}
-	if HasTransform(op.Op) {
-		ret += fmt.Sprint(" ")
-		ret += TransformToString(op.Transform)
-	}
-	ret += fmt.Sprint(" ")
-	ret += InstructionToString(op.Detail)
-	return ret
-}
-
-func TransformToString(tf Transform) string {
-	return fmt.Sprintf("[[%f,%f;%f,%f],[%f,%f]]",i2f(tf.a),i2f(tf.b),i2f(tf.c),
-		i2f(tf.d),i2f(tf.x),i2f(tf.y))
-}
-
-func InstructionToString(ins Instruction) string {
-	ret := fmt.Sprintf("%s",OperationNames[ins.Op])
-	for _,v := range ins.Args {
-		ret += fmt.Sprintf(" %f",i2f(v))
+	if len(op.Args) > 0 {
+		ret += " "
+		ret += ValuesToString(op.Args)
 	}
 	return ret
 }
 
-func OperationEqual(op1, op2 Operation) bool {
-	if op1.Op != op2.Op {
-		return false
-	}
-	if op1.Op == UNDEFINED || op1.Op == POP {
-		return true
-	}
-	if HasName(op1.Op) && op1.Name != op2.Name {
-		return false
-	}
-	if HasTransform(op1.Op) && !TransformEqual(op1.Transform,op2.Transform) {
-		return false
-	}
-	if op1.Op == PUSH {
-		return true
-	}
-	return InstructionEqual(op1.Detail,op2.Detail)
-}
-
-func TransformEqual(tf1,tf2 Transform) bool {
-	return tf1 == tf2
-}
-
-func InstructionEqual(ins1,ins2 Instruction) bool {
-	return reflect.DeepEqual(ins1,ins2)
+func (op *Operation) Equal(op2 Operation) bool {
+	return reflect.DeepEqual(*op,op2)
 }

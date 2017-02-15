@@ -24,77 +24,69 @@ func TestNewOperation(t *testing.T) {
 	for i,v := range OperationNames {
 		id := int16(i)
 		operation = NewOperation(id)
-		if operation.Op != id || operation.Detail.Op != UNDEFINED{
+		if operation.Command != id || operation.Name != "" ||
+		  len(operation.Args) != 0 {
 			t.Errorf("NewOperation(%s) failed!",strings.ToUpper(v))
 		}
 	}
-	operation = NewLineOperation(-1.0,-1.2,1.0,1.2)
-	if operation.Op != LINE || operation.Detail.Op != LINE ||
-		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-100,-120,100,120}) {
-		t.Errorf("NewLineOperation(-1.0,-1.2,1.0,1.2) failed, got %s %b",
-			OperationToString(operation))
+	operation = NewLineOperation(NewNumberValues(-100,-120,100,120)...)
+	if operation.Command != LINE || operation.Name != "" ||
+		 !reflect.DeepEqual(operation.Args,NewNumberValues(-100,-120,100,120)) {
+		t.Errorf("NewLineOperation(-100,-120,100,120) failed, got %s",
+			operation.ToString())
 	}
-	operation = NewRectOperation(-2.0,-2.2,2.0,2.2)
-	if operation.Op != RECT || operation.Detail.Op != RECT ||
-		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-200,-220,200,220}) {
-		t.Errorf("NewRectOperation(-2.0,-2.2,2.0,2.2) failed, got %s",
-			OperationToString(operation))
+	operation = NewRectOperation(NewNumberValues(-200,-220,200,220)...)
+	if operation.Command != RECT || operation.Name != "" ||
+		 !reflect.DeepEqual(operation.Args,NewNumberValues(-200,-220,200,220)) {
+		t.Errorf("NewRectOperation(-200,-220,200,220) failed, got %s",
+			operation.ToString())
 	}
-	operation = NewCircleOperation(-2.2,2.0,1.2)
-	if operation.Op != CIRCLE || operation.Detail.Op != CIRCLE ||
-		 !reflect.DeepEqual(operation.Detail.Args,[]int16{-220,200,120}) {
-		t.Errorf("NewCircleOperation(-2.2,2.0,1.2) failed, got %s",
-			OperationToString(operation))
+	operation = NewCircleOperation(NewNumberValues(-220,200,120)...)
+	if operation.Command != CIRCLE || operation.Name != "" ||
+		 !reflect.DeepEqual(operation.Args,NewNumberValues(-220,200,120)) {
+		t.Errorf("NewCircleOperation(-220,200,120) failed, got %s",
+			operation.ToString())
 	}
-	operation = NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26)
-	if operation.Op != POLYGON || operation.Detail.Op != POLYGON ||
-		 !reflect.DeepEqual(operation.Detail.Args,
-		 []int16{-221,242,123,114,455,126}) {
-		t.Errorf("NewPolygonOperation(-2.21,2.42,1.23,1.14,4.55,1.26) failed, got %s",
-			OperationToString(operation))
+	operation = NewPolygonOperation(NewNumberValues(-221,242,123,114,455,126)...)
+	if operation.Command != POLYGON || operation.Name != "" ||
+		 !reflect.DeepEqual(operation.Args, NewNumberValues(6,-221,242,123,114,455,126)) {
+		t.Errorf("NewPolygonOperation(-221,242,123,114,455,126) failed, got %s",
+			operation.ToString())
 	}
-	operation = NewSetOperation("scale",1.1)
-	if operation.Op != SET || operation.Detail.Op != SET ||
-		 operation.Name != "scale" || !reflect.DeepEqual(operation.Detail.Args,
-		 []int16{110}) {
-		t.Errorf("NewSetOperation(1.1) failed, got %s",OperationToString(operation))
+	operation = NewSetOperation("scale",NewNumberValue(110))
+	if operation.Command != SET || operation.Name != "scale" ||
+	   !reflect.DeepEqual(operation.Args, NewNumberValues(110)) {
+		t.Errorf("NewSetOperation(110) failed, got %s",operation.ToString())
 	}
-	operation = NewUseOperation("T",NewLineInstruction(0.0,0.0,-1.0,-1.0))
-	if operation.Op != USE || operation.Detail.Op != LINE ||
-		 operation.Name != "T" || !InstructionEqual(operation.Detail,
-			 NewLineInstruction(0.0,0.0,-1.0,-1.0)) {
-		t.Errorf("NewUseOperation(T,line) failed, got %s",OperationToString(operation))
+	operation = NewUseOperation("T")
+	if operation.Command != USE || operation.Name != "T" ||
+	   len(operation.Args)!=0 {
+		t.Errorf("NewUseOperation(T) failed, got %s",operation.ToString())
 	}
 	operation = NewPushOperation("T")
-	if operation.Op != PUSH || operation.Detail.Op != PUSH ||
-		 operation.Name != "T" || len(operation.Detail.Args)!=0 {
-		t.Errorf("NewPushOperation(T) failed, got %s",OperationToString(operation))
+	if operation.Command != PUSH || operation.Name != "T" ||
+	   len(operation.Args)!=0 {
+		t.Errorf("NewPushOperation(T) failed, got %s",operation.ToString())
 	}
 	operation = NewPopOperation()
-	if operation.Op != POP || operation.Detail.Op != POP ||
-		 len(operation.Detail.Args)!=0 {
-		t.Errorf("NewPopOperation() failed, got %s",OperationToString(operation))
+	if operation.Command != POP || operation.Name != "" ||
+		 len(operation.Args)!=0 {
+		t.Errorf("NewPopOperation() failed, got %s",operation.ToString())
 	}
-	operation = NewTransformOperation("T",1.1,-0.1,0.1,-0.9,-2.0,0.0)
-	if operation.Op != TRANSFORM || operation.Detail.Op != TRANSFORM ||
-		 operation.Name != "T" || !reflect.DeepEqual(operation.Transform,
-		 NewTransform(1.1,-0.1,0.1,-0.9,-2.0,0.0)) {
-		t.Errorf("NewTransformOperation(T) failed, got %s",OperationToString(operation))
+	operation = NewTransformOperation("T",NewNumberValues(110,-10,10,-90,-200,0)...)
+	if operation.Command != TRANSFORM || operation.Name != "T" ||
+	   !reflect.DeepEqual(operation.Args, NewNumberValues(110,-10,10,-90,-200,0)) {
+		t.Errorf("NewTransformOperation(T) failed, got %s",operation.ToString())
 	}
 	operation = NewDrawOperation("plane")
-	if operation.Op != DRAW || operation.Detail.Op != DRAW ||
-		 operation.Name != "plane" || len(operation.Detail.Args)!=0 {
-		t.Errorf("NewDrawOperation(plane) failed, got %s",OperationToString(operation))
+	if operation.Command != DRAW || operation.Name != "plane" ||
+	   len(operation.Args)!=0 {
+		t.Errorf("NewDrawOperation(plane) failed, got %s",operation.ToString())
 	}
-	operation = NewImportOperation("plane.adr")
-	if operation.Op != IMPORT || operation.Detail.Op != IMPORT ||
-		 operation.Name != "plane.adr" || len(operation.Detail.Args)!=0 {
-		t.Errorf("NewDrawOperation(plane.adr) failed, got %s",OperationToString(operation))
-	}
-	operation = NewImportOperation("no-plane.adr")
-	if operation.Op != UNDEFINED {
-		t.Errorf("NewDrawOperation(no-plane.adr) succeeded by mistake, got %s",
-			OperationToString(operation))
+	operation = NewImportOperation("plane")
+	if operation.Command != IMPORT || operation.Name != "plane" ||
+	   len(operation.Args)!=0 {
+		t.Errorf("NewDrawOperation(plane) failed, got %s",operation.ToString())
 	}
 }
 
@@ -102,111 +94,94 @@ func TestToString(t *testing.T) {
 	var operation Operation
 	var operationStr string
 	var expect string
-	var zero float64 = 0.0
 	for i,v := range OperationNames {
 		id := int16(i)
 		operation = NewOperation(id)
-		operationStr = OperationToString(operation)
-		if !HasTransform(id) {
-			if operationStr != fmt.Sprintf("%s undefined",v) {
-				t.Errorf("OperationToString(%s operation) failed!",v)
-			}
-		} else {
-			if operationStr != fmt.Sprintf("%s [[%f,%f;%f,%f],[%f,%f]] undefined",
-																		v,zero,zero,zero,zero,zero,zero) {
-				t.Errorf("OperationToString(%s operation) failed!",v)
-			}
+		operationStr = operation.ToString()
+		if operationStr != fmt.Sprintf("%s",v) {
+			t.Errorf("OperationToString(%s operation) failed!",v)
 		}
 	}
-	operation = NewLineOperation(-1.0,-1.2,1.0,1.2)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("line line %f %f %f %f",
-			float64(-1.0),float64(-1.2),float64(1.0),float64(1.2))
+	operation = NewLineOperation(NewNumberValues(-100,-120,100,120)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("line [%d,%d,%d,%d]",-100,-120,100,120)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"line",expect,operationStr)
 	}
-	operation = NewRectOperation(-2.0,-2.2,2.0,2.2)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("rect rect %f %f %f %f",
-			float64(-2.0),float64(-2.2),float64(2.0),float64(2.2))
+	operation = NewRectOperation(NewNumberValues(-200,-220,200,220)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("rect [%d,%d,%d,%d]",-200,-220,200,220)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"rect",expect,operationStr)
 	}
-	operation = NewCircleOperation(-2.2,2.0,1.2)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("circle circle %f %f %f",
-			float64(-2.2),float64(2.0),float64(1.2))
+	operation = NewCircleOperation(NewNumberValues(-220,200,120)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("circle [%d,%d,%d]",-220,200,120)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"circle",expect,operationStr)
 	}
-	operation = NewPolygonOperation(-2.21,2.42,1.13,1.23,4.55,1.26)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("polygon polygon %f %f %f %f %f %f",
-			float64(-2.21),float64(2.42),float64(1.13),
-			float64(1.23),float64(4.55),float64(1.26))
+	operation = NewPolygonOperation(NewNumberValues(-221,242,113,123,455,126)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("polygon [%d,%d,%d,%d,%d,%d,%d]",6,-221,242,113,123,455,126)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"polygon",expect,operationStr)
 	}
-	operation = NewOvalOperation(-2.21,2.42,1.13,1.23,4.55)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("oval oval %f %f %f %f %f",
-			float64(-2.21),float64(2.42),float64(1.13),float64(1.23),float64(4.55))
+	operation = NewOvalOperation(NewNumberValues(-221,242,113,123,455)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("oval [%d,%d,%d,%d,%d]",-221,242,113,123,455)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"oval",expect,operationStr)
 	}
-	operation = NewSetOperation("scale",1.1)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("set scale set %f",float64(1.1))
+	operation = NewSetOperation("scale",NewNumberValue(110))
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("set scale [%d]",110)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"set",expect,operationStr)
 	}
-	operation = NewUseOperation("T",NewLineInstruction(0.0,1.1,-0.1,-1.0))
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("use T line %f %f %f %f",
-			float64(0.0),float64(1.1),float64(-0.1),float64(-1.0))
+	operation = NewUseOperation("T")
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("use T")
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"use",expect,operationStr)
 	}
 	operation = NewPushOperation("T")
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("push T push")
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("push T")
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"push",expect,operationStr)
 	}
 	operation = NewPopOperation()
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("pop pop")
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("pop")
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"pop",expect,operationStr)
 	}
-	operation = NewTransformOperation("T",1.1,-0.1,-0.1,1.1,0.0,0.0)
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("transform T [[%f,%f;%f,%f],[%f,%f]] transform",
-			float64(1.1),float64(-0.1),float64(-0.1),
-			float64(1.1),float64(0.0),float64(0.0))
+	operation = NewTransformOperation("T",NewNumberValues(110,-10,-10,110,0,0)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("transform T [%d,%d,%d,%d,%d,%d]",110,-10,-10,110,0,0)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"transform",expect,operationStr)
 	}
 	operation = NewDrawOperation("plane")
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("draw plane draw")
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("draw plane")
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"draw",expect,operationStr)
 	}
-	operation = NewImportOperation("plane.adr")
-	operationStr = OperationToString(operation)
-	expect = fmt.Sprintf("import plane.adr import")
+	operation = NewImportOperation("plane")
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("import plane")
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"import",expect,operationStr)
