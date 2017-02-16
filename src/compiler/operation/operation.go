@@ -360,3 +360,14 @@ func (op *Operation)ToString() string {
 func (op *Operation) Equal(op2 Operation) bool {
 	return reflect.DeepEqual(*op,op2)
 }
+
+func ValuesToInt(values []Value) ([]int16,bool) {
+	ret := make([]int16,len(values))
+	for i,v := range values {
+		if v.Type != INTEGER {
+			return ret,false
+		}
+		ret[i] = v.Number
+	}
+	return ret,true
+}

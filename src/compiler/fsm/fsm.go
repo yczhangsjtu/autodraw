@@ -14,7 +14,9 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package fsm
 
+import "fmt"
 import "strconv"
+import "compiler/instruction"
 import "compiler/operation"
 import "compiler/transformer"
 
@@ -156,6 +158,12 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 			return NewFSMError(
 				oper.ToString(),"error in applying transform: "+err.Error())
 		}
+		inst,err := instruction.GetInstruction(oper.Command,values)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(),"error in generating instruction: "+err.Error())
+		}
+		fmt.Println(inst.ToString())
 	case operation.SET:
 		err := fsm.vartable.Assign(oper.Name,oper.Args[0])
 		if err != nil {
@@ -211,6 +219,7 @@ func ArgsToTransform(args []int16) *transformer.Transform {
 
 func (fsm *FSM)ApplyTransform(coords []int16, command int16) ([]int16,error) {
 	result := make([]int16,len(coords))
+	copy(result,coords)
 	switch command {
 	case operation.LINE:
 		fallthrough
