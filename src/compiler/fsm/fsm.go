@@ -304,11 +304,7 @@ func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 }
 
 func (fsm *FSM) DumpInstructions() []byte {
-	ret := []byte{}
-	for _, inst := range fsm.instlist {
-		ret = append(ret, inst.ToBytes()...)
-	}
-	return ret
+	return instruction.InstructionsToBytes(fsm.instlist)
 }
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

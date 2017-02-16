@@ -53,3 +53,27 @@ func TestGetInstruction(t *testing.T) {
 		}
 	}
 }
+
+func TestBytesToInstructions(t *testing.T) {
+	tests := []Instruction {
+		{operation.LINE,[]int16{120,300,110,310}},
+		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
+		{operation.CIRCLE,[]int16{110,110,100}},
+		{operation.OVAL,[]int16{110,110,100,50,50}},
+	}
+	bytes := InstructionsToBytes(tests)
+	results,err := BytesToInstructions(bytes)
+	if err != nil {
+		t.Errorf("Error in BytesToInstructions: %s",err.Error)
+	}
+	if len(tests) != len(results) {
+		t.Errorf("Got wrong number of results: %d vs %d",len(results),len(tests))
+	}
+	for i := 0; i < len(tests); i++ {
+		if !tests[i].Equal(results[i]) {
+			t.Errorf("Result wrong at %d instruction: expect %s, got %s",i+1,
+				tests[i].ToString(),results[i].ToString())
+		}
+	}
+}

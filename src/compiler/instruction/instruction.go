@@ -60,6 +60,67 @@ func (inst *Instruction) ToBytes() []byte {
 	return ret
 }
 
+func InstructionsToBytes(insts []Instruction) []byte {
+	ret := []byte{}
+	for _, inst := range insts {
+		ret = append(ret, inst.ToBytes()...)
+	}
+	return ret
+}
+
+func ComposeBytes(b1,b2 byte) int16 {
+	return int16(uint(b1)*256+uint(b2))
+}
+
+func BytesToInstructions(data []byte) ([]Instruction,error) {
+	ptr := 0
+	ret := []Instruction{}
+	for {
+		if ptr+1 >= len(data) {
+			return ret,nil
+		}
+		command := ComposeBytes(data[ptr],data[ptr+1])
+		if int(command) >= len(operation.OperationTypes) {
+			return ret,NewInstructionError(
+				"Invalid command number: "+strconv.Itoa(int(command)))
+		}
+		commandType := operation.OperationTypes[command]
+		ptr += 2
+		var argNum int16
+		if commandType == operation.DRAW_FIXED {
+			argNum = operation.ExpectArgNum(command)
+		} else if commandType == operation.DRAW_UNDETERMINED {
+			if ptr+1 >= len(data) {
+				return ret,NewInstructionError(
+					"Not enough arguments for command at position "+strconv.Itoa(ptr-2))
+			}
+			argNum = ComposeBytes(data[ptr],data[ptr+1])
+			ptr += 2
+		}
+		if commandType == operation.DRAW_FIXED ||
+			commandType == operation.DRAW_UNDETERMINED {
+			if ptr+int(argNum*2) > len(data) {
+				return ret,NewInstructionError(
+					"Not enough arguments for command at position "+strconv.Itoa(ptr-2))
+			}
+			args := make([]int16,argNum)
+			for i := 0; i < int(argNum); i++ {
+				args[i] = ComposeBytes(data[ptr+i*2],data[ptr+1+i*2])
+			}
+			inst,err := GetInstruction(command,args)
+			if err != nil {
+				return ret,err
+			}
+			ret = append(ret,inst)
+			ptr += int(argNum*2)
+		} else {
+			return ret,NewInstructionError(
+				"Invalid command number "+strconv.Itoa(int(command)))
+		}
+	}
+	return ret,nil
+}
+
 func GetInstruction(command int16, args []int16) (Instruction,error) {
 	switch command {
 	case operation.LINE:
