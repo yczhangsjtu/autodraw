@@ -26,7 +26,7 @@ func IsIdentity(tfstack *TFStack) bool {
 	return len(tfstack.stack) == 0
 }
 
-func GetTransform(tfstack *TFStack) *Transform {
+func (tfstack *TFStack)GetTransform() *Transform {
 	if len(tfstack.stack) == 0 {
 		identity := IdentityTransform()
 		return identity
@@ -34,16 +34,16 @@ func GetTransform(tfstack *TFStack) *Transform {
 	return tfstack.stack[len(tfstack.stack)-1]
 }
 
-func PushTransform(tfstack *TFStack, tf *Transform) {
+func (tfstack *TFStack)PushTransform(tf *Transform) {
 	if len(tfstack.stack) == 0 {
 		tfstack.stack = append(tfstack.stack,tf)
 	} else {
-		tf = GetTransform(tfstack).Compose(tf)
+		tf = tfstack.GetTransform().Compose(tf)
 		tfstack.stack = append(tfstack.stack,tf)
 	}
 }
 
-func PopTransform(tfstack *TFStack) bool {
+func (tfstack *TFStack)PopTransform() bool {
 	if len(tfstack.stack) == 0 {
 		return false
 	}

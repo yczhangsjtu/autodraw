@@ -14,6 +14,7 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package fsm
 
+import "strconv"
 import "compiler/operation"
 import "compiler/transformer"
 
@@ -36,8 +37,17 @@ type VartableError struct {
 	reason string
 }
 
+type ArgError struct {
+	reason string
+}
+
 func NewVartableError(reason string) *VartableError {
 	e := VartableError{reason}
+	return &e
+}
+
+func NewArgError(reason string) *ArgError {
+	e := ArgError{reason}
 	return &e
 }
 
@@ -52,6 +62,10 @@ func (e *FSMError) Error() string {
 
 func (e *VartableError) Error() string {
 	return "Vartable error: " + e.reason
+}
+
+func (e *ArgError) Error() string {
+	return "Argument error: " + e.reason
 }
 
 func NewVarTable() *VarTable {
@@ -124,7 +138,24 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	case operation.OVAL:
 		fallthrough
 	case operation.POLYGON:
-		return nil
+		values,err := fsm.LookupValues(oper.Args)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(),"invalid drawing arguments: "+err.Error())
+		}
+		hasTmpTransform := fsm.tmptransform != nil
+		if hasTmpTransform {
+			fsm.tfstack.PushTransform(fsm.tmptransform)
+			fsm.tmptransform = nil
+		}
+		values,err = fsm.ApplyTransform(values,oper.Command)
+		if hasTmpTransform {
+			fsm.tfstack.PopTransform()
+		}
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(),"error in applying transform: "+err.Error())
+		}
 	case operation.SET:
 		err := fsm.vartable.Assign(oper.Name,oper.Args[0])
 		if err != nil {
@@ -132,17 +163,29 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 		}
 	case operation.USE:
 		value,ok := fsm.Lookup(oper.Name)
-		if ok {
-			if value.Type == operation.TRANSFORMER {
-				fsm.tmptransform = value.Transform
-			} else {
-				return NewFSMError(oper.ToString()," "+oper.Name+" is not transform ")
-			}
-		} else {
-			return NewFSMError(oper.ToString(),"undefined transform "+oper.Name)
+		if !ok {
+			return NewFSMError(
+				oper.ToString(),"failed to lookup transform "+oper.Name)
 		}
+		if value.Type != operation.TRANSFORMER {
+			return NewFSMError(oper.ToString(),oper.Name+" is not transform")
+		}
+		fsm.tmptransform = value.Transform
 	case operation.PUSH:
+		value,ok := fsm.Lookup(oper.Name)
+		if !ok {
+			return NewFSMError(
+				oper.ToString(),"failed to lookup transform "+oper.Name)
+		}
+		if value.Type != operation.TRANSFORMER {
+			return NewFSMError(oper.ToString(),oper.Name+" is not transform")
+		}
+		fsm.tfstack.PushTransform(value.Transform)
 	case operation.POP:
+		ok := fsm.tfstack.PopTransform()
+		if !ok {
+			return NewFSMError(oper.ToString(),"stack already empty")
+		}
 	case operation.TRANSFORM:
 		tfvalues,err := fsm.LookupValues(oper.Args)
 		if err != nil {
@@ -164,4 +207,36 @@ func ArgsToTransform(args []int16) *transformer.Transform {
 		float64(args[0])/100.0,float64(args[1])/100.0,float64(args[2]),
 		float64(args[3])/100.0,float64(args[4])/100.0,float64(args[5]),
 	)
+}
+
+func (fsm *FSM)ApplyTransform(coords []int16, command int16) ([]int16,error) {
+	result := make([]int16,len(coords))
+	switch command {
+	case operation.LINE:
+		fallthrough
+	case operation.RECT:
+		fallthrough
+	case operation.POLYGON:
+		if len(coords) == 0 || len(coords)%2 == 1 {
+			return result,NewArgError(
+				"invalid number of coordinates: "+strconv.Itoa(len(coords)))
+		}
+		for i := 0; i < len(coords)/2; i++ {
+			ix,iy := 2*i,2*i+1
+			x,y := coords[ix],coords[iy]
+			fx,fy := fsm.tfstack.GetTransform().Apply(float64(x),float64(y))
+			result[ix],result[iy] = int16(fx),int16(fy)
+		}
+		return result,nil
+	case operation.CIRCLE:
+		fallthrough
+	case operation.OVAL:
+		x,y := coords[0],coords[1]
+		fx,fy := fsm.tfstack.GetTransform().Apply(float64(x),float64(y))
+		result[0],result[1] = int16(fx),int16(fy)
+		return result,nil
+	default:
+		return result,NewArgError(
+			"invalid draw command: "+operation.OperationNames[command])
+	}
 }

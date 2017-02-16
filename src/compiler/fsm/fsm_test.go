@@ -24,6 +24,7 @@ func TestFSMUpdate(t *testing.T) {
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
 		"circle 110 110 100",
+		"oval 110 110 100 50 120",
 		"set Alice 15",
 		"set Bob 20",
 		"set Bob Alice",
