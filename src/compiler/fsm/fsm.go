@@ -12,6 +12,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
+
+/*
+Package fsm implements a simple Finite State Machine which takes operations as
+inputs and updates its state. When the input operations are finished, the
+generated instructions can be dumped to byte string.
+*/
 package fsm
 
 import "fmt"
@@ -20,9 +26,10 @@ import "compiler/instruction"
 import "compiler/operation"
 import "compiler/transformer"
 
-type VarTable map[string]operation.Value
-type TFTable map[string]*transformer.Transform
+type VarTable map[string] operation.Value
 
+///////////////////////////////////////////////////////////////////////////////
+// Definition of the FSM class ////////////////////////////////////////////////
 type FSM struct {
 	tfstack  *transformer.TFStack
 	vartable *VarTable
@@ -32,7 +39,11 @@ type FSM struct {
 
 	Verbose bool
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// Following are error classes used in this package ///////////////////////////
 type FSMError struct {
 	oper   string
 	reason string
@@ -72,22 +83,37 @@ func (e *VartableError) Error() string {
 func (e *ArgError) Error() string {
 	return "Argument error: " + e.reason
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// Initialization functions ///////////////////////////////////////////////////
+
+// NewVarTable generates an empty variable lookup table
 func NewVarTable() *VarTable {
 	return &VarTable{}
 }
 
-func NewTFTable() *TFTable {
-	return &TFTable{}
-}
-
+// NewFSM generates an empty Finite State Machine and initializes the
+// components
 func NewFSM() *FSM {
 	fsm := new(FSM)
 	fsm.tfstack = transformer.NewTFStack()
 	fsm.vartable = NewVarTable()
 	return fsm
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// Methods for VarTable class /////////////////////////////////////////////////
+
+// VarTable.Assign maps a string to a value. If the value is also a variable,
+// lookup the variable name and map the string to the result found.
+// If failed to find the variable, return an error.
+// 
+// If carried out successfully, the string will point to a value of type
+// INTEGER or TRANSFORMER in this table.
 func (vartable *VarTable) Assign(name string, v operation.Value) error {
 	if v.Type == operation.VARIABLE {
 		value, ok := (*vartable)[v.Name]
@@ -102,34 +128,24 @@ func (vartable *VarTable) Assign(name string, v operation.Value) error {
 	}
 	return NewVartableError("Invalid value: " + v.ToString())
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-func (fsm *FSM) Lookup(name string) (operation.Value, bool) {
-	value, ok := (*fsm.vartable)[name]
-	return value, ok && (value.Type == operation.INTEGER ||
-		value.Type == operation.TRANSFORMER)
-}
+///////////////////////////////////////////////////////////////////////////////
+// Methods for FSM class //////////////////////////////////////////////////////
 
-func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
-	result := make([]int16, len(args))
-	for i, v := range args {
-		if v.Type == operation.VARIABLE {
-			value, ok := fsm.Lookup(v.Name)
-			if !ok {
-				return result, NewVartableError("failed to lookup " + v.Name)
-			}
-			if value.Type != operation.INTEGER {
-				return result, NewVartableError(v.Name + " is not integer")
-			}
-			result[i] = value.Number
-		} else if v.Type == operation.INTEGER {
-			result[i] = v.Number
-		} else {
-			return result, NewVartableError("invalid value type")
-		}
-	}
-	return result, nil
-}
+/* Update is the most crucial method of FSM: takes an operation and update its
+own state.
 
+For simple drawing operations like LINE, RECT, POLYGON, the FSM
+maps the coordinates using the current transformation matrix in the stack
+and generate an instruction.
+
+For operations like SET, TRANSFORM the FSM modifies its variable lookup
+table.
+
+For operations like USE, PUSH and POP the FSM modifies its matrix stack.
+*/
 func (fsm *FSM) Update(oper operation.Operation) error {
 	switch oper.Command {
 	case operation.UNDEFINED:
@@ -216,13 +232,44 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	return nil
 }
 
-func ArgsToTransform(args []int16) *transformer.Transform {
-	return transformer.NewTransform(
-		float64(args[0])/100.0, float64(args[1])/100.0, float64(args[2]),
-		float64(args[3])/100.0, float64(args[4])/100.0, float64(args[5]),
-	)
+// FSM.Lookup is a wrapper around the lookup function of its variable table.
+func (fsm *FSM) Lookup(name string) (operation.Value, bool) {
+	value, ok := (*fsm.vartable)[name]
+	return value, ok && (value.Type == operation.INTEGER ||
+		value.Type == operation.TRANSFORMER)
 }
 
+// FSM.LookupValues takes an array of values which may contain unresolved
+// variables and force them into an array of values of type INTEGER.
+// Appearance of other types like TRANSFORMER will cause an error
+func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
+	result := make([]int16, len(args))
+	for i, v := range args {
+		if v.Type == operation.VARIABLE {
+			value, ok := fsm.Lookup(v.Name)
+			if !ok {
+				return result, NewVartableError("failed to lookup " + v.Name)
+			}
+			if value.Type != operation.INTEGER {
+				return result, NewVartableError(v.Name + " is not integer")
+			}
+			result[i] = value.Number
+		} else if v.Type == operation.INTEGER {
+			result[i] = v.Number
+		} else {
+			return result, NewVartableError("invalid value type")
+		}
+	}
+	return result, nil
+}
+
+// FSM.ApplyTransform apply the current transformation matrix to the
+// coordinates list. The behavior is different for different drawing types.
+//
+// For LINE, RECT and POLYGON, take each pair of integers as (x,y) coordinates
+// and apply the transformation.
+//
+// For CIRCLE and OVAL only the first two integers are coordinates.
 func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 	result := make([]int16, len(coords))
 	copy(result, coords)
@@ -263,3 +310,26 @@ func (fsm *FSM) DumpInstructions() []byte {
 	}
 	return ret
 }
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// Other utility functions ////////////////////////////////////////////////////
+
+// ArgsToTransform given an array of six integers returns a transformer
+// The transformer is a matrix of type float64, so to represent a transformer
+// with some accuracy, use 1 in integer to represent 0.01 in float
+func ArgsToTransform(args []int16) *transformer.Transform {
+	return transformer.NewTransform(
+		float64(args[0])/100.0, float64(args[1])/100.0, float64(args[2]),
+		float64(args[3])/100.0, float64(args[4])/100.0, float64(args[5]),
+	)
+}
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// BUG: #1: Transformation on Circle and Oval is not easy! Currently we just
+// apply the transformation to the position (i.e. the center) of the shape, but
+// after the transformation the radius and rotation are changed, and the new
+// values are tricky to calculate. And circle is not necessarily circle after
+// transformation.
