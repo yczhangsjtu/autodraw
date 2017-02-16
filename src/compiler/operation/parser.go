@@ -197,6 +197,10 @@ func (parser *LineParser) ParseLine(line string) (Operation,error) {
 	line = strings.Trim(line," ")
 	tokens := strings.Split(line," ")
 
+	if len(tokens) == 0 {
+		return NewOperation(UNDEFINED),NewParseError("","","empty line")
+	}
+
 	for _,token := range tokens {
 		err := parser.Update(token)
 		if err != nil {

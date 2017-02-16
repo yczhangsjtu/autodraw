@@ -28,6 +28,9 @@ type FSM struct {
 	vartable *VarTable
 
 	tmptransform *transformer.Transform
+	instlist []instruction.Instruction
+
+	Verbose bool
 }
 
 type FSMError struct {
@@ -163,7 +166,10 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 			return NewFSMError(
 				oper.ToString(),"error in generating instruction: "+err.Error())
 		}
-		fmt.Println(inst.ToString())
+		if fsm.Verbose {
+			fmt.Println(inst.ToString())
+		}
+		fsm.instlist = append(fsm.instlist,inst)
 	case operation.SET:
 		err := fsm.vartable.Assign(oper.Name,oper.Args[0])
 		if err != nil {
@@ -248,4 +254,12 @@ func (fsm *FSM)ApplyTransform(coords []int16, command int16) ([]int16,error) {
 		return result,NewArgError(
 			"invalid draw command: "+operation.OperationNames[command])
 	}
+}
+
+func (fsm *FSM)DumpInstructions() []byte {
+	ret := []byte{}
+	for _,inst := range fsm.instlist {
+		ret = append(ret,inst.ToBytes()...)
+	}
+	return ret
 }

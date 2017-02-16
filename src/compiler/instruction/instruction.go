@@ -49,6 +49,17 @@ func (inst *Instruction) ToString() string {
 	return fmt.Sprintf("%s %d",operation.OperationNames[inst.Command],inst.Args)
 }
 
+func (inst *Instruction) ToBytes() []byte {
+	ret := make([]byte,len(inst.Args)*2+2)
+	ret[0] = byte(inst.Command/256)
+	ret[1] = byte(inst.Command%256)
+	for i := 0; i < len(inst.Args); i++ {
+		ret[2*i+2] = byte(uint(inst.Args[i])/256)
+		ret[2*i+3] = byte(uint(inst.Args[i])%256)
+	}
+	return ret
+}
+
 func GetInstruction(command int16, args []int16) (Instruction,error) {
 	switch command {
 	case operation.LINE:
