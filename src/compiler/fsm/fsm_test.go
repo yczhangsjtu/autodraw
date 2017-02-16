@@ -31,7 +31,7 @@ func TestFSMUpdate(t *testing.T) {
 		"set Carror -10",
 		"set Bob Carror",
 		"set Carror Alice",
-		"transform T 100 0 0 0 100 0",
+		"transform T Alice Carror 0 Bob 100 0",
 		"set Q T",
 		"set P Q",
 	}

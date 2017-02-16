@@ -90,22 +90,25 @@ func (fsm *FSM) Lookup(name string) (operation.Value,bool) {
 		value.Type == operation.TRANSFORMER)
 }
 
-func (fsm *FSM) LookupValues(args []operation.Value) ([]int16,bool) {
+func (fsm *FSM) LookupValues(args []operation.Value) ([]int16,error) {
 	result := make([]int16,len(args))
 	for i,v := range args {
 		if v.Type == operation.VARIABLE {
 			value,ok := fsm.Lookup(v.Name)
-			if !ok || v.Type != operation.INTEGER {
-				return result,false
+			if !ok {
+				return result,NewVartableError("failed to lookup "+v.Name)
+			}
+			if value.Type != operation.INTEGER {
+				return result,NewVartableError(v.Name+" is not integer")
 			}
 			result[i] = value.Number
 		} else if v.Type == operation.INTEGER {
 			result[i] = v.Number
 		} else {
-			return result,false
+			return result,NewVartableError("invalid value type")
 		}
 	}
-	return result,true
+	return result,nil
 }
 
 func (fsm *FSM) Update(oper operation.Operation) error {
@@ -141,11 +144,13 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	case operation.PUSH:
 	case operation.POP:
 	case operation.TRANSFORM:
-		tfvalues,ok := fsm.LookupValues(oper.Args)
-		if !ok {
-			return NewFSMError(oper.ToString(),"invalid transform arguments")
+		tfvalues,err := fsm.LookupValues(oper.Args)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(),"invalid transform arguments: "+err.Error())
 		}
-		fsm.vartable.Assign(oper.Name,operation.NewTransformValue(ArgsToTransform(tfvalues)))
+		fsm.vartable.Assign(
+			oper.Name,operation.NewTransformValue(ArgsToTransform(tfvalues)))
 	case operation.DRAW:
 	case operation.IMPORT:
 	case operation.BEGIN:
