@@ -36,7 +36,8 @@ type LineParser struct {
 	line string
 
 	expectName bool
-	expectArgs int16
+	expectArgs bool
+	expectArgNum int16
 	needArgNum bool
 
 	command int16
@@ -107,10 +108,11 @@ func (parser *LineParser) Update(token string) error {
 			parser.command = OperationNameMap[token]
 			parser.expectName = ExpectName(parser.command)
 			parser.needArgNum = NeedArgNum(parser.command)
+			parser.expectArgNum = ExpectArgNum(parser.command)
 			parser.expectArgs = ExpectArgs(parser.command)
 			if parser.expectName {
 				parser.state = NEED_NAME
-			} else if parser.expectArgs > 0 || parser.needArgNum {
+			} else if parser.expectArgs {
 				parser.state = NEED_VALUE
 			} else {
 				parser.state = FINISH
@@ -128,7 +130,7 @@ func (parser *LineParser) Update(token string) error {
 			return NewParseError(parser.line,token,"expect name")
 		} else if tokenType == NAME {
 			parser.name = token
-			if parser.expectArgs > 0 || parser.needArgNum {
+			if parser.expectArgs {
 				parser.state = NEED_VALUE
 			} else {
 				parser.state = FINISH
@@ -144,19 +146,23 @@ func (parser *LineParser) Update(token string) error {
 		} else if tokenType == NUMBER {
 			number,_ := strconv.ParseInt(token,10,16)
 			parser.args = append(parser.args,NewNumberValue(int16(number)))
-			if int16(len(parser.args)) == parser.expectArgs {
+			if int16(len(parser.args)) == parser.expectArgNum {
 				parser.state = FINISH
-			} else if int16(len(parser.args)) > parser.expectArgs && !parser.needArgNum {
-				parser.state = ERROR
-				return NewParseError(parser.line,token,"too many arguments")
+			} else if int16(len(parser.args)) > parser.expectArgNum {
+				if !parser.needArgNum {
+					parser.state = ERROR
+					return NewParseError(parser.line,token,"too many arguments")
+				}
 			}
 		} else if tokenType == NAME {
 			parser.args = append(parser.args,NewVariableValue(token))
-			if int16(len(parser.args)) == parser.expectArgs {
+			if int16(len(parser.args)) == parser.expectArgNum {
 				parser.state = FINISH
-			} else if int16(len(parser.args)) > parser.expectArgs && !parser.needArgNum {
-				parser.state = ERROR
-				return NewParseError(parser.line,token,"too many arguments")
+			} else if int16(len(parser.args)) > parser.expectArgNum {
+				if !parser.needArgNum {
+					parser.state = ERROR
+					return NewParseError(parser.line,token,"too many arguments")
+				}
 			}
 		} else {
 			parser.state = ERROR
@@ -179,7 +185,7 @@ func (parser *LineParser) Digest() (Operation,error) {
 		if parser.expectName {
 			op.Name = parser.name
 		}
-		if parser.expectArgs > 0 || parser.needArgNum {
+		if parser.expectArgs {
 			op.Args = parser.args
 		}
 		return op,nil

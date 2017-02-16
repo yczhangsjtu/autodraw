@@ -73,9 +73,13 @@ var expectName = []bool {
 	false,false,false,true,false,true,
 }
 
-var expectArgs = []int16 {
+var expectArgNum = []int16 {
 	0,4,4,3,5,0,1,0,
 	0,0,6,0,0,0,0,
+}
+
+var expectArgs = []bool {
+	false,true,true,true,false,false,
 }
 
 var needArgNum = []bool {
@@ -108,8 +112,12 @@ func ExpectName(op int16) bool {
 	return expectName[OperationTypes[op]]
 }
 
-func ExpectArgs(op int16) int16 {
-	return expectArgs[op]
+func ExpectArgNum(op int16) int16 {
+	return expectArgNum[op]
+}
+
+func ExpectArgs(op int16) bool {
+	return expectArgs[OperationTypes[op]]
 }
 
 func NeedArgNum(op int16) bool {
