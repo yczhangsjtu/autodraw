@@ -15,5 +15,23 @@
 package tikz
 
 import "testing"
+import "compiler/operation"
+import "compiler/instruction"
 
-func Test
+func TestUpdate(t *testing.T) {
+	tests := []instruction.Instruction {
+		{operation.LINE,[]int16{120,300,110,310}},
+		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
+		{operation.CIRCLE,[]int16{110,110,100}},
+		{operation.OVAL,[]int16{110,110,100,50,50}},
+	}
+	tz := NewTikz()
+	for _,inst := range tests {
+		err := tz.Update(inst)
+		if err != nil {
+			t.Errorf("Failed to process instruction %s: %s",
+				inst.ToString(),err.Error())
+		}
+	}
+}
