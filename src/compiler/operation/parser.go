@@ -35,52 +35,52 @@ const (
 type LineParser struct {
 	line string
 
-	expectName bool
-	expectArgs bool
+	expectName   bool
+	expectArgs   bool
 	expectArgNum int16
-	needArgNum bool
+	needArgNum   bool
 
 	command int16
-	name string
-	args []Value
+	name    string
+	args    []Value
 
 	state int16
 }
 
 type ParseError struct {
-	line string
-	token string
+	line   string
+	token  string
 	reason string
 }
 
 func NewParseError(line, token, reason string) *ParseError {
-	return &ParseError{line,token,reason}
+	return &ParseError{line, token, reason}
 }
 
 func (e *ParseError) Error() string {
 	return e.line + ": " + e.token + " -- " + e.reason
 }
 
-func StringToValue(token string) (Value,error) {
+func StringToValue(token string) (Value, error) {
 	if ValidName(token) {
-		return NewVariableValue(token),nil
+		return NewVariableValue(token), nil
 	}
-	i,err := strconv.ParseInt(token,10,16)
+	i, err := strconv.ParseInt(token, 10, 16)
 	if err != nil {
-		return Value{NAN,"",0,nil},err
+		return Value{NAN, "", 0, nil}, err
 	}
-	return NewNumberValue(int16(i)),nil
+	return NewNumberValue(int16(i)), nil
 }
 
 func TokenIdentify(token string) int16 {
-	_,ok := OperationNameMap[token]
+	_, ok := OperationNameMap[token]
 	if ok {
 		return COMMAND
 	}
 	if ValidName(token) {
 		return NAME
 	}
-	_,err := strconv.ParseInt(token,10,16)
+	_, err := strconv.ParseInt(token, 10, 16)
 	if err != nil {
 		return INVALID
 	}
@@ -94,13 +94,13 @@ func NewLineParser() LineParser {
 }
 
 func (parser *LineParser) Update(token string) error {
-	token = strings.Trim(token," ")
+	token = strings.Trim(token, " ")
 	if token == "" {
 		return nil
 	}
 	tokenType := TokenIdentify(token)
 	if tokenType == INVALID {
-		return NewParseError(parser.line,token,"invalid token")
+		return NewParseError(parser.line, token, "invalid token")
 	}
 	switch parser.state {
 	case NEED_COMMAND:
@@ -119,15 +119,15 @@ func (parser *LineParser) Update(token string) error {
 			}
 		} else {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"expect command")
+			return NewParseError(parser.line, token, "expect command")
 		}
 	case NEED_NAME:
 		if tokenType == COMMAND {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"is reserved")
+			return NewParseError(parser.line, token, "is reserved")
 		} else if tokenType == NUMBER {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"expect name")
+			return NewParseError(parser.line, token, "expect name")
 		} else if tokenType == NAME {
 			parser.name = token
 			if parser.expectArgs {
@@ -137,49 +137,49 @@ func (parser *LineParser) Update(token string) error {
 			}
 		} else {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"unknown token")
+			return NewParseError(parser.line, token, "unknown token")
 		}
 	case NEED_VALUE:
 		if tokenType == COMMAND {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"is reserved")
+			return NewParseError(parser.line, token, "is reserved")
 		} else if tokenType == NUMBER {
-			number,_ := strconv.ParseInt(token,10,16)
-			parser.args = append(parser.args,NewNumberValue(int16(number)))
+			number, _ := strconv.ParseInt(token, 10, 16)
+			parser.args = append(parser.args, NewNumberValue(int16(number)))
 			if int16(len(parser.args)) == parser.expectArgNum {
 				parser.state = FINISH
 			} else if int16(len(parser.args)) > parser.expectArgNum {
 				if !parser.needArgNum {
 					parser.state = ERROR
-					return NewParseError(parser.line,token,"too many arguments")
+					return NewParseError(parser.line, token, "too many arguments")
 				}
 			}
 		} else if tokenType == NAME {
-			parser.args = append(parser.args,NewVariableValue(token))
+			parser.args = append(parser.args, NewVariableValue(token))
 			if int16(len(parser.args)) == parser.expectArgNum {
 				parser.state = FINISH
 			} else if int16(len(parser.args)) > parser.expectArgNum {
 				if !parser.needArgNum {
 					parser.state = ERROR
-					return NewParseError(parser.line,token,"too many arguments")
+					return NewParseError(parser.line, token, "too many arguments")
 				}
 			}
 		} else {
 			parser.state = ERROR
-			return NewParseError(parser.line,token,"unknown token")
+			return NewParseError(parser.line, token, "unknown token")
 		}
 	case FINISH:
 		parser.state = ERROR
-		return NewParseError(parser.line,token,"too many arguments")
+		return NewParseError(parser.line, token, "too many arguments")
 	case ERROR:
-		return NewParseError(parser.line,token,"parser in invalid state")
+		return NewParseError(parser.line, token, "parser in invalid state")
 	}
 	return nil
 }
 
-func (parser *LineParser) Digest() (Operation,error) {
+func (parser *LineParser) Digest() (Operation, error) {
 	if !parser.needArgNum && parser.state != FINISH {
-		return NewOperation(UNDEFINED),NewParseError(parser.line,"$","not finished")
+		return NewOperation(UNDEFINED), NewParseError(parser.line, "$", "not finished")
 	} else {
 		op := NewOperation(parser.command)
 		if parser.expectName {
@@ -188,23 +188,23 @@ func (parser *LineParser) Digest() (Operation,error) {
 		if parser.expectArgs {
 			op.Args = parser.args
 		}
-		return op,nil
+		return op, nil
 	}
 }
 
-func (parser *LineParser) ParseLine(line string) (Operation,error) {
+func (parser *LineParser) ParseLine(line string) (Operation, error) {
 	parser.line = line
-	line = strings.Trim(line," ")
-	tokens := strings.Split(line," ")
+	line = strings.Trim(line, " ")
+	tokens := strings.Split(line, " ")
 
 	if len(tokens) == 0 {
-		return NewOperation(UNDEFINED),NewParseError("","","empty line")
+		return NewOperation(UNDEFINED), NewParseError("", "", "empty line")
 	}
 
-	for _,token := range tokens {
+	for _, token := range tokens {
 		err := parser.Update(token)
 		if err != nil {
-			return NewOperation(UNDEFINED),err
+			return NewOperation(UNDEFINED), err
 		}
 	}
 	return parser.Digest()

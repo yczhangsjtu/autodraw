@@ -19,7 +19,7 @@ import "compiler/operation"
 
 func TestFSMUpdate(t *testing.T) {
 	fsm := NewFSM()
-	tests := []string {
+	tests := []string{
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
@@ -51,15 +51,15 @@ func TestFSMUpdate(t *testing.T) {
 		"circle 110 110 100",
 		"oval 110 110 100 50 120",
 	}
-	results := map[string] int16 {
-		"Alice":110, "Bob":-10, "Carror":110,
+	results := map[string]int16{
+		"Alice": 110, "Bob": -10, "Carror": 110,
 	}
-	transforms := []string {
-		"T","P","Q",
+	transforms := []string{
+		"T", "P", "Q",
 	}
-	for _,line := range tests {
+	for _, line := range tests {
 		parser := operation.NewLineParser()
-		oper,err := parser.ParseLine(line)
+		oper, err := parser.ParseLine(line)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -68,22 +68,22 @@ func TestFSMUpdate(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 	}
-	for k,v := range results {
-		value,ok := fsm.Lookup(k)
+	for k, v := range results {
+		value, ok := fsm.Lookup(k)
 		if !ok {
-			t.Errorf("%s not found",k)
+			t.Errorf("%s not found", k)
 		}
 		if value.Number != v {
-			t.Errorf("Expect %s = %d, got %d",k,v,value.Number)
+			t.Errorf("Expect %s = %d, got %d", k, v, value.Number)
 		}
 	}
-	for _,tf := range transforms {
-		value,ok := fsm.Lookup(tf)
+	for _, tf := range transforms {
+		value, ok := fsm.Lookup(tf)
 		if !ok {
-			t.Errorf("transform %s not found",tf)
+			t.Errorf("transform %s not found", tf)
 		}
 		if value.Type != operation.TRANSFORMER {
-			t.Errorf("%s is not transform",tf)
+			t.Errorf("%s is not transform", tf)
 		}
 	}
 }

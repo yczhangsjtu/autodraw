@@ -17,7 +17,7 @@ package operation
 import "testing"
 
 func BenchmarkParseLine(b *testing.B) {
-	tests := []string {
+	tests := []string{
 		"undefined",
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
@@ -37,7 +37,7 @@ func BenchmarkParseLine(b *testing.B) {
 		"circle 110 110",
 	}
 	for i := 0; i < b.N; i++ {
-		for _,test := range tests {
+		for _, test := range tests {
 			parser := NewLineParser()
 			parser.ParseLine(test)
 		}
@@ -46,7 +46,7 @@ func BenchmarkParseLine(b *testing.B) {
 
 func TestParseLine(t *testing.T) {
 	Verbose = false
-	tests := []string {
+	tests := []string{
 		"undefined",
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
@@ -67,16 +67,16 @@ func TestParseLine(t *testing.T) {
 	}
 	expects := []Operation{
 		NewOperation(UNDEFINED),
-		NewLineOperation(NewNumberValues(120,300,110,310)...),
-		NewRectOperation(NewNumberValues(110,0,0,110)...),
-		NewPolygonOperation(NewNumberValues(110,100,0,10,210,220)...),
-		NewCircleOperation(NewNumberValues(110,110,100)...),
-		NewOvalOperation(NewNumberValues(110,110,100,50,50)...),
-		NewSetOperation("scale",NewNumberValue(110)),
+		NewLineOperation(NewNumberValues(120, 300, 110, 310)...),
+		NewRectOperation(NewNumberValues(110, 0, 0, 110)...),
+		NewPolygonOperation(NewNumberValues(110, 100, 0, 10, 210, 220)...),
+		NewCircleOperation(NewNumberValues(110, 110, 100)...),
+		NewOvalOperation(NewNumberValues(110, 110, 100, 50, 50)...),
+		NewSetOperation("scale", NewNumberValue(110)),
 		NewUseOperation("T"),
 		NewPushOperation("T"),
 		NewPopOperation(),
-		NewTransformOperation("T",NewNumberValues(-100,10,-10,100,200,200)...),
+		NewTransformOperation("T", NewNumberValues(-100, 10, -10, 100, 200, 200)...),
 		NewDrawOperation("plane"),
 		NewImportOperation("plane"),
 		NewOperation(UNDEFINED),
@@ -85,16 +85,16 @@ func TestParseLine(t *testing.T) {
 		NewOperation(UNDEFINED),
 	}
 
-	for i,test := range tests {
+	for i, test := range tests {
 		parser := NewLineParser()
-		result,err := parser.ParseLine(test)
+		result, err := parser.ParseLine(test)
 		if !expects[i].Equal(result) || result.Command != UNDEFINED && err != nil {
 			errorString := ""
 			if err != nil {
 				errorString = err.Error()
 			}
 			t.Errorf("Parser failed for [%s], expect (%s), got (%s): %s\n",
-							test,expects[i].ToString(),result.ToString(),errorString)
+				test, expects[i].ToString(), result.ToString(), errorString)
 		}
 	}
 }

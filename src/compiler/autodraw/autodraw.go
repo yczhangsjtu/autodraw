@@ -28,6 +28,7 @@ import "strings"
 import "io/ioutil"
 import "compiler/fsm"
 import "compiler/operation"
+
 //import "compiler/instruction"
 
 const Version string = "1.0"
@@ -38,21 +39,21 @@ var inputFileName string
 var outputFileName string
 
 func usage(info string) {
-	fmt.Fprintf(os.Stderr,"This is autodraw, version %s\n",Version)
-	fmt.Fprintln(os.Stderr,info)
+	fmt.Fprintf(os.Stderr, "This is autodraw, version %s\n", Version)
+	fmt.Fprintln(os.Stderr, info)
 	flag.Usage()
 }
 
 func main() {
 
 	// Process commandline to initialize settings
-	flag.BoolVar(&verbose,"v",false,"verbose level")
-	flag.BoolVar(&verbose,"verbose",false,"verbose level")
-	flag.BoolVar(&help,"h",false,"show help message")
-	flag.BoolVar(&help,"help",false,"show help message")
-	flag.StringVar(&outputFileName,"o","","output file name")
-	flag.StringVar(&outputFileName,"output","a.anm","output file name")
-	flag.Usage = func (){
+	flag.BoolVar(&verbose, "v", false, "verbose level")
+	flag.BoolVar(&verbose, "verbose", false, "verbose level")
+	flag.BoolVar(&help, "h", false, "show help message")
+	flag.BoolVar(&help, "help", false, "show help message")
+	flag.StringVar(&outputFileName, "o", "", "output file name")
+	flag.StringVar(&outputFileName, "output", "a.anm", "output file name")
+	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s inputFile [options]\noptions:\n", os.Args[0])
 		flag.PrintDefaults()
 	}
@@ -74,7 +75,7 @@ func main() {
 
 	inputFileName = args[0]
 
-	file,err := os.Open(inputFileName)
+	file, err := os.Open(inputFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,12 +88,12 @@ func main() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		line = strings.Trim(line," ")
+		line = strings.Trim(line, " ")
 		if line == "" {
 			continue
 		}
 		parser := operation.NewLineParser()
-		oper,err := parser.ParseLine(line)
+		oper, err := parser.ParseLine(line)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -102,4 +103,7 @@ func main() {
 	}
 
 	err = ioutil.WriteFile(outputFileName, compiler.DumpInstructions(), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

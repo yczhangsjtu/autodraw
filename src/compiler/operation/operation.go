@@ -59,51 +59,51 @@ const (
 
 const Version string = "1.0"
 
-var OperationNames = []string {
-	"undefined","line","rect","circle","oval","polygon","set","use",
-	"push","pop","transform","draw","import","begin","end",
+var OperationNames = []string{
+	"undefined", "line", "rect", "circle", "oval", "polygon", "set", "use",
+	"push", "pop", "transform", "draw", "import", "begin", "end",
 }
 
-var OperationTypes = []int16 {
-	NOT_OPERATION,DRAW_FIXED,DRAW_FIXED,DRAW_FIXED,DRAW_FIXED,DRAW_UNDETERMINED,
-	ASSIGN,STATE,STATE,SINGLE,ASSIGN,STATE,STATE,STATE,SINGLE,
+var OperationTypes = []int16{
+	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
+	ASSIGN, STATE, STATE, SINGLE, ASSIGN, STATE, STATE, STATE, SINGLE,
 }
 
-var expectName = []bool {
-	false,false,false,true,false,true,
+var expectName = []bool{
+	false, false, false, true, false, true,
 }
 
-var expectArgNum = []int16 {
-	0,4,4,3,5,0,1,0,
-	0,0,6,0,0,0,0,
+var expectArgNum = []int16{
+	0, 4, 4, 3, 5, 0, 1, 0,
+	0, 0, 6, 0, 0, 0, 0,
 }
 
-var expectArgs = []bool {
-	false,true,true,true,false,false,
+var expectArgs = []bool{
+	false, true, true, true, false, false,
 }
 
-var needArgNum = []bool {
-	false,false,true,false,false,false,
+var needArgNum = []bool{
+	false, false, true, false, false, false,
 }
 
-var OperationNameMap = map[string] int16 {
-	"undefined":UNDEFINED, "line":LINE, "rect":RECT, "circle":CIRCLE,
-	"oval":OVAL, "polygon":POLYGON, "set":SET, "use":USE, "push":PUSH,
-	"pop":POP, "transform":TRANSFORM,"draw":DRAW,"import":IMPORT,"begin":BEGIN,
-	"end":END,
+var OperationNameMap = map[string]int16{
+	"undefined": UNDEFINED, "line": LINE, "rect": RECT, "circle": CIRCLE,
+	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
+	"pop": POP, "transform": TRANSFORM, "draw": DRAW, "import": IMPORT, "begin": BEGIN,
+	"end": END,
 }
 
 type Value struct {
-	Type int16
-	Name string
-	Number int16
+	Type      int16
+	Name      string
+	Number    int16
 	Transform *transformer.Transform
 }
 
 type Operation struct {
 	Command int16
-	Name string
-	Args []Value
+	Name    string
+	Args    []Value
 }
 
 var Verbose bool = false
@@ -125,26 +125,26 @@ func NeedArgNum(op int16) bool {
 }
 
 func NewNumberValue(x int16) Value {
-	return Value{INTEGER,"",x,nil}
+	return Value{INTEGER, "", x, nil}
 }
 
 func NewNumberValues(args ...int16) []Value {
-	ret := make([]Value,len(args))
-	for i,_ := range ret {
-		ret[i] = Value{INTEGER,"",args[i],nil}
+	ret := make([]Value, len(args))
+	for i, _ := range ret {
+		ret[i] = Value{INTEGER, "", args[i], nil}
 	}
 	return ret
 }
 
 func NewVariableValue(name string) Value {
 	if ValidName(name) {
-		return Value{VARIABLE,name,0,nil}
+		return Value{VARIABLE, name, 0, nil}
 	}
-	return Value{NAN,"",0,nil}
+	return Value{NAN, "", 0, nil}
 }
 
 func NewTransformValue(tf *transformer.Transform) Value {
-	return Value{TRANSFORMER,"",0,tf}
+	return Value{TRANSFORMER, "", 0, tf}
 }
 
 func NewOperation(op int16) Operation {
@@ -191,7 +191,7 @@ func newOperationTypeState(op int16, name string) Operation {
 
 func NewLineOperation(coords ...Value) Operation {
 	if len(coords) == 4 {
-		return newOperationTypeDrawFixed(LINE,coords...)
+		return newOperationTypeDrawFixed(LINE, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
@@ -199,7 +199,7 @@ func NewLineOperation(coords ...Value) Operation {
 
 func NewRectOperation(coords ...Value) Operation {
 	if len(coords) == 4 {
-		return newOperationTypeDrawFixed(RECT,coords...)
+		return newOperationTypeDrawFixed(RECT, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
@@ -207,7 +207,7 @@ func NewRectOperation(coords ...Value) Operation {
 
 func NewCircleOperation(coords ...Value) Operation {
 	if len(coords) == 3 {
-		return newOperationTypeDrawFixed(CIRCLE,coords...)
+		return newOperationTypeDrawFixed(CIRCLE, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
@@ -215,7 +215,7 @@ func NewCircleOperation(coords ...Value) Operation {
 
 func NewOvalOperation(coords ...Value) Operation {
 	if len(coords) == 5 {
-		return newOperationTypeDrawFixed(OVAL,coords...)
+		return newOperationTypeDrawFixed(OVAL, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
@@ -223,19 +223,19 @@ func NewOvalOperation(coords ...Value) Operation {
 
 func NewPolygonOperation(coords ...Value) Operation {
 	if len(coords) >= 4 && len(coords)%2 == 0 {
-		return newOperationTypeDrawNondetermined(POLYGON,coords...)
+		return newOperationTypeDrawNondetermined(POLYGON, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
 }
 
-func NewSetOperation(name string,v Value) Operation {
-	return newOperationTypeAssign(SET,name,v)
+func NewSetOperation(name string, v Value) Operation {
+	return newOperationTypeAssign(SET, name, v)
 }
 
-func NewTransformOperation(name string,coords ...Value) Operation {
+func NewTransformOperation(name string, coords ...Value) Operation {
 	if len(coords) == 6 {
-		return newOperationTypeAssign(TRANSFORM,name,coords...)
+		return newOperationTypeAssign(TRANSFORM, name, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
@@ -246,26 +246,26 @@ func NewPopOperation() Operation {
 }
 
 func NewPushOperation(name string) Operation {
-	return newOperationTypeState(PUSH,name)
+	return newOperationTypeState(PUSH, name)
 }
 
 func NewDrawOperation(name string) Operation {
-	return newOperationTypeState(DRAW,name)
+	return newOperationTypeState(DRAW, name)
 }
 
 func NewImportOperation(path string) Operation {
-	return newOperationTypeState(IMPORT,path)
+	return newOperationTypeState(IMPORT, path)
 }
 
 func NewUseOperation(name string) Operation {
-	return newOperationTypeState(USE,name)
+	return newOperationTypeState(USE, name)
 }
 
 func ValidName(name string) bool {
 	if len(name) == 0 {
 		return false
 	}
-	for _,c := range name {
+	for _, c := range name {
 		if !unicode.IsLetter(c) {
 			return false
 		}
@@ -277,7 +277,7 @@ func ValidPath(path string) bool {
 	if len(path) == 0 {
 		return false
 	}
-	file,err := os.Open(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return false
 	} else {
@@ -288,20 +288,20 @@ func ValidPath(path string) bool {
 
 func (v *Value) Print() {
 	switch v.Type {
-		case INTEGER:
-			fmt.Printf("%d",v.Number)
-		case TRANSFORMER:
-			v.Transform.Print()
-		case VARIABLE:
-			fmt.Printf("%s",v.Name)
-		default:
-			fmt.Printf("undefined")
+	case INTEGER:
+		fmt.Printf("%d", v.Number)
+	case TRANSFORMER:
+		v.Transform.Print()
+	case VARIABLE:
+		fmt.Printf("%s", v.Name)
+	default:
+		fmt.Printf("undefined")
 	}
 }
 
 func ValuesPrint(vs []Value) {
 	fmt.Printf("[")
-	for i,v := range vs {
+	for i, v := range vs {
 		if i > 0 {
 			fmt.Printf(",")
 		}
@@ -311,9 +311,9 @@ func ValuesPrint(vs []Value) {
 }
 
 func (op *Operation) Print() {
-	fmt.Printf("%s",OperationNames[op.Command])
+	fmt.Printf("%s", OperationNames[op.Command])
 	if op.Name != "" {
-		fmt.Printf(" %s",op.Name)
+		fmt.Printf(" %s", op.Name)
 	}
 	if len(op.Args) > 0 {
 		fmt.Printf(" ")
@@ -323,19 +323,19 @@ func (op *Operation) Print() {
 
 func (v *Value) ToString() string {
 	switch v.Type {
-		case INTEGER:
-			return fmt.Sprintf("%d",v.Number)
-		case TRANSFORMER:
-			return v.Transform.ToString()
-		case VARIABLE:
-			return fmt.Sprintf("%s",v.Name)
+	case INTEGER:
+		return fmt.Sprintf("%d", v.Number)
+	case TRANSFORMER:
+		return v.Transform.ToString()
+	case VARIABLE:
+		return fmt.Sprintf("%s", v.Name)
 	}
 	return fmt.Sprintf("undefined")
 }
 
 func ValuesToString(vs []Value) string {
 	ret := "["
-	for i,v := range vs {
+	for i, v := range vs {
 		if i > 0 {
 			ret += ","
 		}
@@ -345,10 +345,10 @@ func ValuesToString(vs []Value) string {
 	return ret
 }
 
-func (op *Operation)ToString() string {
-	ret := fmt.Sprintf("%s",OperationNames[op.Command])
+func (op *Operation) ToString() string {
+	ret := fmt.Sprintf("%s", OperationNames[op.Command])
 	if op.Name != "" {
-		ret += fmt.Sprintf(" %s",op.Name)
+		ret += fmt.Sprintf(" %s", op.Name)
 	}
 	if len(op.Args) > 0 {
 		ret += " "
@@ -358,16 +358,16 @@ func (op *Operation)ToString() string {
 }
 
 func (op *Operation) Equal(op2 Operation) bool {
-	return reflect.DeepEqual(*op,op2)
+	return reflect.DeepEqual(*op, op2)
 }
 
-func ValuesToInt(values []Value) ([]int16,bool) {
-	ret := make([]int16,len(values))
-	for i,v := range values {
+func ValuesToInt(values []Value) ([]int16, bool) {
+	ret := make([]int16, len(values))
+	for i, v := range values {
 		if v.Type != INTEGER {
-			return ret,false
+			return ret, false
 		}
 		ret[i] = v.Number
 	}
-	return ret,true
+	return ret, true
 }
