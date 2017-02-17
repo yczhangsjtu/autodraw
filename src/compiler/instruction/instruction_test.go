@@ -27,7 +27,7 @@ func TestGetInstruction(t *testing.T) {
 	}
 	results := []Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
-		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.CIRCLE,[]int16{110,110,100}},
 		{operation.OVAL,[]int16{110,110,100,50,50}},
@@ -41,6 +41,9 @@ func TestGetInstruction(t *testing.T) {
 		args,ok := operation.ValuesToInt(oper.Args)
 		if !ok {
 			t.Errorf("Failed to evaluate arguments: %s",oper.ToString())
+		}
+		if oper.Command == operation.RECT {
+			args = expandRect(args)
 		}
 		inst,err := GetInstruction(oper.Command,args)
 		if err != nil {
@@ -57,7 +60,7 @@ func TestGetInstruction(t *testing.T) {
 func TestBytesToInstructions(t *testing.T) {
 	tests := []Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
-		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.CIRCLE,[]int16{110,110,100}},
 		{operation.OVAL,[]int16{110,110,100,50,50}},

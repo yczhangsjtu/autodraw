@@ -86,6 +86,11 @@ var needArgNum = []bool{
 	false, false, true, false, false, false,
 }
 
+var finalArgNum = []int16{
+	0, 4, 8, 3, 5, 0, 1, 0,
+	0, 0, 6, 0, 0, 0, 0,
+}
+
 var OperationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT, "circle": CIRCLE,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
@@ -118,6 +123,10 @@ func ExpectArgNum(op int16) int16 {
 
 func ExpectArgs(op int16) bool {
 	return expectArgs[OperationTypes[op]]
+}
+
+func FinalArgNum(op int16) int16 {
+	return finalArgNum[op]
 }
 
 func NeedArgNum(op int16) bool {

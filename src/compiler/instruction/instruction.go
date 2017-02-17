@@ -88,7 +88,7 @@ func BytesToInstructions(data []byte) ([]Instruction,error) {
 		ptr += 2
 		var argNum int16
 		if commandType == operation.DRAW_FIXED {
-			argNum = operation.ExpectArgNum(command)
+			argNum = operation.FinalArgNum(command)
 		} else if commandType == operation.DRAW_UNDETERMINED {
 			if ptr+1 >= len(data) {
 				return ret,NewInstructionError(
@@ -123,17 +123,17 @@ func BytesToInstructions(data []byte) ([]Instruction,error) {
 
 func GetInstruction(command int16, args []int16) (Instruction,error) {
 	switch command {
-	case operation.LINE:
-		fallthrough
 	case operation.RECT:
+		fallthrough
+	case operation.LINE:
 		fallthrough
 	case operation.CIRCLE:
 		fallthrough
 	case operation.OVAL:
-		if len(args) != int(operation.ExpectArgNum(command)) {
+		if len(args) != int(operation.FinalArgNum(command)) {
 			return NewInstruction(),NewInstructionError(
 				"invalid number of arguments: "+operation.OperationNames[command]+
-			  " requires "+strconv.Itoa(int(operation.ExpectArgNum(command)))+
+			  " requires "+strconv.Itoa(int(operation.FinalArgNum(command)))+
 				" args, got "+strconv.Itoa(len(args)))
 		}
 		inst := NewInstruction()
@@ -154,4 +154,13 @@ func GetInstruction(command int16, args []int16) (Instruction,error) {
 		return NewInstruction(),NewInstructionError(
 			"invalid draw command: "+operation.OperationNames[command])
 	}
+}
+
+func expandRect(args []int16) []int16 {
+	ret := make([]int16,8)
+	ret[0],ret[1] = args[0],args[1]
+	ret[2],ret[3] = args[0],args[3]
+	ret[4],ret[5] = args[2],args[3]
+	ret[6],ret[7] = args[2],args[1]
+	return ret
 }

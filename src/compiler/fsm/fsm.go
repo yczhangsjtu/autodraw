@@ -274,9 +274,24 @@ func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 	result := make([]int16, len(coords))
 	copy(result, coords)
 	switch command {
-	case operation.LINE:
-		fallthrough
 	case operation.RECT:
+		if len(coords) != 4 {
+			return result, NewArgError(
+				"invalid number of coordinates: " + strconv.Itoa(len(coords)))
+		}
+		result = make([]int16, 8)
+		x1, y1, x2, y2 := float64(coords[0]), float64(coords[1]),
+											float64(coords[2]), float64(coords[3])
+		fx,fy := fsm.tfstack.GetTransform().Apply(float64(x1), float64(y1))
+		result[0], result[1] = int16(fx), int16(fy)
+		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x1), float64(y2))
+		result[2], result[3] = int16(fx), int16(fy)
+		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x2), float64(y2))
+		result[4], result[5] = int16(fx), int16(fy)
+		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x2), float64(y1))
+		result[6], result[7] = int16(fx), int16(fy)
+		return result,nil
+	case operation.LINE:
 		fallthrough
 	case operation.POLYGON:
 		if len(coords) == 0 || len(coords)%2 == 1 {
