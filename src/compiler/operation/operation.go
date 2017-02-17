@@ -265,9 +265,16 @@ func ValidName(name string) bool {
 	if len(name) == 0 {
 		return false
 	}
-	for _, c := range name {
-		if !unicode.IsLetter(c) {
-			return false
+	for i, c := range name {
+		if i == 0 {
+			if !unicode.IsLetter(c) {
+				return false
+			}
+		} else {
+			if !unicode.IsLetter(c) && !unicode.IsDigit(c) && c != '-' &&
+				c != '.' && c != '_' {
+				return false
+			}
 		}
 	}
 	return true
