@@ -21,7 +21,7 @@ import "compiler/instruction"
 func TestUpdate(t *testing.T) {
 	tests := []instruction.Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
-		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.CIRCLE,[]int16{110,110,100}},
 		//{operation.OVAL,[]int16{110,110,100,50,50}},
@@ -53,7 +53,7 @@ func TestUpdate(t *testing.T) {
 func TestInstToTikz(t *testing.T) {
 	tests := []instruction.Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
-		{operation.RECT,[]int16{110,0,0,110}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.CIRCLE,[]int16{110,110,100}},
 	}
