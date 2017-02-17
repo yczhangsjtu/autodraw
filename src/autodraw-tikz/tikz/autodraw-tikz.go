@@ -71,7 +71,7 @@ func InstToTikz(inst instruction.Instruction, scale float64) (string,error) {
 		return fmt.Sprintf("\\draw %s;",GenerateFloatPairs("--",
 					IntsToScaledFloats(inst.Args,scale))),nil
 	case operation.RECT:
-		return fmt.Sprintf("\\draw %s;",GenerateFloatPairs("rectangle",
+		return fmt.Sprintf("\\draw %s;",GenerateFloatPairsRect("--",
 				IntsToScaledFloats(inst.Args,scale))),nil
 	case operation.POLYGON:
 		return fmt.Sprintf("\\draw %s -- cycle;",GenerateFloatPairs("--",
@@ -116,4 +116,13 @@ func GenerateFloatPairs(connect string, args []float64) string {
 		ret += fmt.Sprintf(fmt.Sprintf(" %s %s",connect,"(%g)"),args[len(args)-1])
 	}
 	return ret
+}
+
+func GenerateFloatPairsRect(connect string, args []float64) string {
+	if len(args) != 4 {
+		return ""
+	}
+	x1,y1,x2,y2 := args[0],args[1],args[2],args[3]
+	return fmt.Sprintf("(%g,%g) -- (%g,%g) -- (%g,%g) -- (%g,%g) -- cycle",
+		x1,y1,x1,y2,x2,y2,x2,y1)
 }

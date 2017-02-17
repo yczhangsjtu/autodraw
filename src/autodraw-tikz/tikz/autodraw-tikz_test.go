@@ -28,7 +28,7 @@ func TestUpdate(t *testing.T) {
 	}
 	expect := "\\begin{tikzpicture}\n"+
 		"  \\draw (1.2,3) -- (1.1,3.1);\n"+
-		"  \\draw (1.1,0) rectangle (0,1.1);\n"+
+		"  \\draw (1.1,0) -- (1.1,1.1) -- (0,1.1) -- (0,0) -- cycle;\n"+
 		"  \\draw (1.1,1) -- (0,0.1) -- (2.1,2.2) -- cycle;\n"+
 		"  \\draw (1.1,1.1) circle (1);\n"+
 		"\\end{tikzpicture}\n"
@@ -59,7 +59,7 @@ func TestInstToTikz(t *testing.T) {
 	}
 	expects := []string {
 		"\\draw (1.2,3) -- (1.1,3.1);",
-		"\\draw (1.1,0) rectangle (0,1.1);",
+		"\\draw (1.1,0) -- (1.1,1.1) -- (0,1.1) -- (0,0) -- cycle;",
 		"\\draw (1.1,1) -- (0,0.1) -- (2.1,2.2) -- cycle;",
 		"\\draw (1.1,1.1) circle (1);",
 	}
