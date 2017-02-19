@@ -33,6 +33,8 @@ const (
 	PUSH
 	POP
 	TRANSFORM
+	ROTATE
+	SCALE
 	DRAW
 	IMPORT
 	BEGIN
@@ -61,12 +63,14 @@ const Version string = "1.0"
 
 var OperationNames = []string{
 	"undefined", "line", "rect", "circle", "oval", "polygon", "set", "use",
-	"push", "pop", "transform", "draw", "import", "begin", "end",
+	"push", "pop", "transform", "rotate", "scale", "draw", "import",
+	"begin", "end",
 }
 
 var OperationTypes = []int16{
 	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
-	ASSIGN, STATE, STATE, SINGLE, ASSIGN, STATE, STATE, STATE, SINGLE,
+	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN,
+	STATE, STATE, STATE, SINGLE,
 }
 
 var expectName = []bool{
@@ -75,7 +79,8 @@ var expectName = []bool{
 
 var expectArgNum = []int16{
 	0, 4, 4, 3, 5, 0, 1, 0,
-	0, 0, 6, 0, 0, 0, 0,
+	0, 0, 6, 1, 2, 0, 0,
+	0, 0,
 }
 
 var expectArgs = []bool{
@@ -88,14 +93,15 @@ var needArgNum = []bool{
 
 var finalArgNum = []int16{
 	0, 4, 8, 3, 5, 0, 1, 0,
-	0, 0, 6, 0, 0, 0, 0,
+	0, 0, 6, 1, 2, 0, 0,
+	0, 0,
 }
 
 var OperationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT, "circle": CIRCLE,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
-	"pop": POP, "transform": TRANSFORM, "draw": DRAW, "import": IMPORT, "begin": BEGIN,
-	"end": END,
+	"pop": POP, "transform": TRANSFORM, "rotate": ROTATE, "scale": SCALE,
+	"draw": DRAW, "import": IMPORT, "begin": BEGIN, "end": END,
 }
 
 type Value struct {
@@ -160,114 +166,6 @@ func NewOperation(op int16) Operation {
 	operation := Operation{}
 	operation.Command = op
 	return operation
-}
-
-func newOperationTypeDrawFixed(op int16, args ...Value) Operation {
-	operation := NewOperation(op)
-	operation.Args = args
-	return operation
-}
-
-func newOperationTypeDrawNondetermined(op int16, args ...Value) Operation {
-	operation := NewOperation(op)
-	operation.Args = args
-	return operation
-}
-
-func newOperationTypeAssign(op int16, name string, args ...Value) Operation {
-	if !ValidName(name) {
-		return NewOperation(UNDEFINED)
-	}
-	operation := NewOperation(op)
-	operation.Name = name
-	operation.Args = args
-	return operation
-}
-
-func newOperationTypeSingle(op int16) Operation {
-	operation := NewOperation(op)
-	return operation
-}
-
-func newOperationTypeState(op int16, name string) Operation {
-	if !ValidName(name) {
-		return NewOperation(UNDEFINED)
-	}
-	operation := NewOperation(op)
-	operation.Name = name
-	return operation
-}
-
-func NewLineOperation(coords ...Value) Operation {
-	if len(coords) == 4 {
-		return newOperationTypeDrawFixed(LINE, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewRectOperation(coords ...Value) Operation {
-	if len(coords) == 4 {
-		return newOperationTypeDrawFixed(RECT, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewCircleOperation(coords ...Value) Operation {
-	if len(coords) == 3 {
-		return newOperationTypeDrawFixed(CIRCLE, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewOvalOperation(coords ...Value) Operation {
-	if len(coords) == 5 {
-		return newOperationTypeDrawFixed(OVAL, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewPolygonOperation(coords ...Value) Operation {
-	if len(coords) >= 4 && len(coords)%2 == 0 {
-		return newOperationTypeDrawNondetermined(POLYGON, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewSetOperation(name string, v Value) Operation {
-	return newOperationTypeAssign(SET, name, v)
-}
-
-func NewTransformOperation(name string, coords ...Value) Operation {
-	if len(coords) == 6 {
-		return newOperationTypeAssign(TRANSFORM, name, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
-func NewPopOperation() Operation {
-	return newOperationTypeSingle(POP)
-}
-
-func NewPushOperation(name string) Operation {
-	return newOperationTypeState(PUSH, name)
-}
-
-func NewDrawOperation(name string) Operation {
-	return newOperationTypeState(DRAW, name)
-}
-
-func NewImportOperation(path string) Operation {
-	return newOperationTypeState(IMPORT, path)
-}
-
-func NewUseOperation(name string) Operation {
-	return newOperationTypeState(USE, name)
 }
 
 func ValidName(name string) bool {
