@@ -27,15 +27,19 @@ import "compiler/operation"
 import "compiler/transformer"
 
 type VarTable map[string] operation.Value
+type OperationTable map[string] []operation.Operation
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definition of the FSM class ////////////////////////////////////////////////
 type FSM struct {
 	tfstack  *transformer.TFStack
 	vartable *VarTable
+	opertable *OperationTable
+	instlist []instruction.Instruction
 
 	tmptransform *transformer.Transform
-	instlist     []instruction.Instruction
+	current string
+	beginLevel int
 
 	Verbose bool
 }
@@ -94,12 +98,21 @@ func NewVarTable() *VarTable {
 	return &VarTable{}
 }
 
+func NewOperationList() []operation.Operation{
+	return []operation.Operation{}
+}
+
+func NewOperationTable() *OperationTable{
+	return &OperationTable{}
+}
+
 // NewFSM generates an empty Finite State Machine and initializes the
 // components
 func NewFSM() *FSM {
 	fsm := new(FSM)
 	fsm.tfstack = transformer.NewTFStack()
 	fsm.vartable = NewVarTable()
+	fsm.opertable = NewOperationTable()
 	return fsm
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,6 +160,27 @@ table.
 For operations like USE, PUSH and POP the FSM modifies its matrix stack.
 */
 func (fsm *FSM) Update(oper operation.Operation) error {
+	if fsm.current != "" {
+		switch oper.Command {
+		case operation.BEGIN:
+			fsm.beginLevel++
+			(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+			return nil
+		case operation.END:
+			fsm.beginLevel--
+			if fsm.beginLevel > 0 {
+				(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+			} else if fsm.beginLevel == 0 {
+				fsm.current = ""
+				return nil
+			} else {
+				return NewFSMError(oper.ToString(),"too many end operation")
+			}
+		default:
+			(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+			return nil
+		}
+	}
 	switch oper.Command {
 	case operation.UNDEFINED:
 		return NewFSMError(oper.ToString(), "undefined operation")
@@ -251,7 +285,16 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	case operation.DRAW:
 	case operation.IMPORT:
 	case operation.BEGIN:
+		_,ok := (*fsm.opertable)[oper.Name]
+		if ok {
+			return NewFSMError(
+				oper.ToString(), "figure already exists: "+oper.Name)
+		}
+		(*fsm.opertable)[oper.Name] = NewOperationList()
+		fsm.current = oper.Name
+		fsm.beginLevel++
 	case operation.END:
+		return NewFSMError(oper.ToString(),"unexpected end of figure")
 	}
 	return nil
 }
@@ -340,6 +383,21 @@ func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 		return result, NewArgError(
 			"invalid draw command: " + operation.OperationNames[command])
 	}
+}
+
+func (fsm *FSM) PushTransform(tf *transformer.Transform) {
+	fsm.tfstack.PushTransform(tf)
+}
+
+func (fsm *FSM) PopTransform() error {
+	if !fsm.tfstack.PopTransform() {
+		return NewFSMError("pop", "stack already empty")
+	}
+	return nil
+}
+
+func (fsm *FSM) Assign(name string, v operation.Value) error {
+	return fsm.vartable.Assign(name,v)
 }
 
 func (fsm *FSM) DumpInstructions() []byte {
