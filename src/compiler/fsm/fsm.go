@@ -220,10 +220,34 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 		tfvalues, err := fsm.LookupValues(oper.Args)
 		if err != nil {
 			return NewFSMError(
-				oper.ToString(), "invalid transform arguments: "+err.Error())
+				oper.ToString(), "invalid rotate arguments: "+err.Error())
 		}
 		fsm.vartable.Assign(
 			oper.Name, operation.NewTransformValue(ArgsToTransform(tfvalues)))
+	case operation.ROTATE:
+		tfvalues, err := fsm.LookupValues(oper.Args)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "invalid transform arguments: "+err.Error())
+		}
+		fsm.vartable.Assign(
+			oper.Name, operation.NewTransformValue(ArgToRotate(tfvalues[0])))
+	case operation.SCALE:
+		tfvalues, err := fsm.LookupValues(oper.Args)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "invalid scale arguments: "+err.Error())
+		}
+		fsm.vartable.Assign(
+			oper.Name, operation.NewTransformValue(ArgsToScale(tfvalues)))
+	case operation.TRANSLATE:
+		tfvalues, err := fsm.LookupValues(oper.Args)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "invalid scale arguments: "+err.Error())
+		}
+		fsm.vartable.Assign(
+			oper.Name, operation.NewTransformValue(ArgsToTranslate(tfvalues)))
 	case operation.DRAW:
 	case operation.IMPORT:
 	case operation.BEGIN:
@@ -334,6 +358,24 @@ func ArgsToTransform(args []int16) *transformer.Transform {
 	return transformer.NewTransform(
 		float64(args[0])/100.0, float64(args[1])/100.0, float64(args[2]),
 		float64(args[3])/100.0, float64(args[4])/100.0, float64(args[5]),
+	)
+}
+
+func ArgToRotate(arg int16) *transformer.Transform {
+	return transformer.RotateTransform(
+		float64(arg)/180.0*3.1415926535897932384626,
+	)
+}
+
+func ArgsToScale(args []int16) *transformer.Transform {
+	return transformer.ScaleTransform(
+		float64(args[0])/100.0, float64(args[1])/100.0,
+	)
+}
+
+func ArgsToTranslate(args []int16) *transformer.Transform {
+	return transformer.TranslateTransform(
+		float64(args[0]), float64(args[1]),
 	)
 }
 ///////////////////////////////////////////////////////////////////////////////

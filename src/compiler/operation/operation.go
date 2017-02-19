@@ -35,6 +35,7 @@ const (
 	TRANSFORM
 	ROTATE
 	SCALE
+	TRANSLATE
 	DRAW
 	IMPORT
 	BEGIN
@@ -63,14 +64,14 @@ const Version string = "1.0"
 
 var OperationNames = []string{
 	"undefined", "line", "rect", "circle", "oval", "polygon", "set", "use",
-	"push", "pop", "transform", "rotate", "scale", "draw", "import",
+	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
 	"begin", "end",
 }
 
 var OperationTypes = []int16{
 	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
-	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN,
-	STATE, STATE, STATE, SINGLE,
+	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN, ASSIGN, STATE, STATE,
+	STATE, SINGLE,
 }
 
 var expectName = []bool{
@@ -79,7 +80,7 @@ var expectName = []bool{
 
 var expectArgNum = []int16{
 	0, 4, 4, 3, 5, 0, 1, 0,
-	0, 0, 6, 1, 2, 0, 0,
+	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
 }
 
@@ -93,7 +94,7 @@ var needArgNum = []bool{
 
 var finalArgNum = []int16{
 	0, 4, 8, 3, 5, 0, 1, 0,
-	0, 0, 6, 1, 2, 0, 0,
+	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
 }
 
@@ -101,7 +102,8 @@ var OperationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT, "circle": CIRCLE,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
 	"pop": POP, "transform": TRANSFORM, "rotate": ROTATE, "scale": SCALE,
-	"draw": DRAW, "import": IMPORT, "begin": BEGIN, "end": END,
+	"translate": TRANSLATE,"draw": DRAW, "import": IMPORT, "begin": BEGIN,
+	"end": END,
 }
 
 type Value struct {

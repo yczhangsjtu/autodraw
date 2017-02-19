@@ -88,6 +88,11 @@ func TestNewOperation(t *testing.T) {
 		!reflect.DeepEqual(operation.Args, NewNumberValues(110, -100)) {
 		t.Errorf("NewScaleOperation(T) failed, got %s", operation.ToString())
 	}
+	operation = newTranslateOperation("T", NewNumberValues(110, -100)...)
+	if operation.Command != TRANSLATE || operation.Name != "T" ||
+		!reflect.DeepEqual(operation.Args, NewNumberValues(110, -100)) {
+		t.Errorf("NewTranslateOperation(T) failed, got %s", operation.ToString())
+	}
 	operation = newDrawOperation("plane")
 	if operation.Command != DRAW || operation.Name != "plane" ||
 		len(operation.Args) != 0 {
@@ -196,6 +201,13 @@ func TestToString(t *testing.T) {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"scale", expect, operationStr)
 	}
+	operation = newTranslateOperation("T", NewNumberValues(110, -100)...)
+	operationStr = operation.ToString()
+	expect = fmt.Sprintf("translate T [%d,%d]", 110, -100)
+	if operationStr != expect {
+		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
+			"translate", expect, operationStr)
+	}
 	operation = newDrawOperation("plane")
 	operationStr = operation.ToString()
 	expect = fmt.Sprintf("draw plane")
@@ -273,6 +285,14 @@ func newTransformOperation(name string, coords ...Value) Operation {
 func newScaleOperation(name string, coords ...Value) Operation {
 	if len(coords) == 2 {
 		return newOperationTypeAssign(SCALE, name, coords...)
+	} else {
+		return NewOperation(UNDEFINED)
+	}
+}
+
+func newTranslateOperation(name string, coords ...Value) Operation {
+	if len(coords) == 2 {
+		return newOperationTypeAssign(TRANSLATE, name, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}

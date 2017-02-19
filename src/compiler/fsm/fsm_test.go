@@ -33,8 +33,15 @@ func TestFSMUpdate(t *testing.T) {
 		"set Bob Carror",
 		"set Carror Alice",
 		"transform T Alice 0 Bob 0 110 Carror",
+		"rotate X Alice",
+		"scale Y Bob Carror",
+		"translate W Bob Carror",
 		"set Q T",
 		"set P Q",
+		"set Z X",
+		"set X Y",
+		"set U W",
+		"set V U",
 		"push T",
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
@@ -55,7 +62,7 @@ func TestFSMUpdate(t *testing.T) {
 		"Alice": 110, "Bob": -10, "Carror": 110,
 	}
 	transforms := []string{
-		"T", "P", "Q",
+		"T", "P", "Q", "U", "V", "W", "X", "Y", "Z",
 	}
 	for _, line := range tests {
 		parser := operation.NewLineParser()
