@@ -25,7 +25,6 @@ const (
 	UNDEFINED int16 = iota
 	LINE
 	RECT
-	CIRCLE
 	OVAL
 	POLYGON
 	SET
@@ -63,13 +62,13 @@ const (
 const Version string = "1.0"
 
 var OperationNames = []string{
-	"undefined", "line", "rect", "circle", "oval", "polygon", "set", "use",
+	"undefined", "line", "rect", "oval", "polygon", "set", "use",
 	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
 	"begin", "end",
 }
 
 var OperationTypes = []int16{
-	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
+	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
 	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN, ASSIGN, STATE, STATE,
 	STATE, SINGLE,
 }
@@ -79,7 +78,7 @@ var expectName = []bool{
 }
 
 var expectArgNum = []int16{
-	0, 4, 4, 3, 5, 0, 1, 0,
+	0, 4, 4, 4, 0, 1, 0,
 	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
 }
@@ -93,13 +92,13 @@ var needArgNum = []bool{
 }
 
 var finalArgNum = []int16{
-	0, 4, 8, 3, 5, 0, 1, 0,
+	0, 4, 8,16, 0, 1, 0,
 	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
 }
 
 var OperationNameMap = map[string]int16{
-	"undefined": UNDEFINED, "line": LINE, "rect": RECT, "circle": CIRCLE,
+	"undefined": UNDEFINED, "line": LINE, "rect": RECT,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
 	"pop": POP, "transform": TRANSFORM, "rotate": ROTATE, "scale": SCALE,
 	"translate": TRANSLATE,"draw": DRAW, "import": IMPORT, "begin": BEGIN,

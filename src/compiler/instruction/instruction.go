@@ -127,8 +127,6 @@ func GetInstruction(command int16, args []int16) (Instruction,error) {
 		fallthrough
 	case operation.LINE:
 		fallthrough
-	case operation.CIRCLE:
-		fallthrough
 	case operation.OVAL:
 		if len(args) != int(operation.FinalArgNum(command)) {
 			return NewInstruction(),NewInstructionError(
@@ -162,5 +160,19 @@ func expandRect(args []int16) []int16 {
 	ret[2],ret[3] = args[0],args[3]
 	ret[4],ret[5] = args[2],args[3]
 	ret[6],ret[7] = args[2],args[1]
+	return ret
+}
+
+func expandOval(args []int16) []int16 {
+	ret := make([]int16,16)
+	x,y,a,b := args[0],args[1],args[2],args[3]
+	ret[0],ret[1] = x+a,y
+	ret[2],ret[3] = x+a,y+b
+	ret[4],ret[5] = x,y+b
+	ret[6],ret[7] = x-a,y+b
+	ret[8],ret[9] = x-a,y
+	ret[10],ret[11] = x-a,y-b
+	ret[12],ret[13] = x,y-b
+	ret[14],ret[15] = x+a,y-b
 	return ret
 }

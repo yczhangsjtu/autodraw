@@ -21,6 +21,7 @@ generated instructions can be dumped to byte string.
 package fsm
 
 import "fmt"
+import "math"
 import "strconv"
 import "compiler/instruction"
 import "compiler/operation"
@@ -187,8 +188,6 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	case operation.LINE:
 		fallthrough
 	case operation.RECT:
-		fallthrough
-	case operation.CIRCLE:
 		fallthrough
 	case operation.OVAL:
 		fallthrough
@@ -359,7 +358,6 @@ func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
 // For LINE, RECT and POLYGON, take each pair of integers as (x,y) coordinates
 // and apply the transformation.
 //
-// For CIRCLE and OVAL only the first two integers are coordinates.
 func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 	result := make([]int16, len(coords))
 	copy(result, coords)
@@ -395,12 +393,34 @@ func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 			result[ix], result[iy] = int16(fx), int16(fy)
 		}
 		return result, nil
-	case operation.CIRCLE:
-		fallthrough
 	case operation.OVAL:
-		x, y := coords[0], coords[1]
-		fx, fy := fsm.tfstack.GetTransform().Apply(float64(x), float64(y))
+		x, y, a, b := float64(coords[0]), float64(coords[1]),
+									float64(coords[2]), float64(coords[3])
+		result = make([]int16,16)
+		tx, ty := x+a, y
+		fx, fy := fsm.tfstack.GetTransform().Apply(tx,ty)
 		result[0], result[1] = int16(fx), int16(fy)
+		tx, ty = x+a, y+b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[2], result[3] = int16(fx), int16(fy)
+		tx, ty = x, y+b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[4], result[5] = int16(fx), int16(fy)
+		tx, ty = x-a, y+b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[6], result[7] = int16(fx), int16(fy)
+		tx, ty = x-a, y
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[8], result[9] = int16(fx), int16(fy)
+		tx, ty = x-a, y-b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[10], result[11] = int16(fx), int16(fy)
+		tx, ty = x, y-b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[12], result[13] = int16(fx), int16(fy)
+		tx, ty = x+a, y-b
+		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
+		result[14], result[15] = int16(fx), int16(fy)
 		return result, nil
 	default:
 		return result, NewArgError(
@@ -444,7 +464,7 @@ func ArgsToTransform(args []int16) *transformer.Transform {
 
 func ArgToRotate(arg int16) *transformer.Transform {
 	return transformer.RotateTransform(
-		float64(arg)/180.0*3.1415926535897932384626,
+		float64(arg)/180.0*math.Pi,
 	)
 }
 
@@ -461,9 +481,3 @@ func ArgsToTranslate(args []int16) *transformer.Transform {
 }
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-// BUG: #1: Transformation on Circle and Oval is not easy! Currently we just
-// apply the transformation to the position (i.e. the center) of the shape, but
-// after the transformation the radius and rotation are changed, and the new
-// values are tricky to calculate. And circle is not necessarily circle after
-// transformation.

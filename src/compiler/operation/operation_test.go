@@ -41,12 +41,6 @@ func TestNewOperation(t *testing.T) {
 		t.Errorf("NewRectOperation(-200,-220,200,220) failed, got %s",
 			operation.ToString())
 	}
-	operation = newCircleOperation(NewNumberValues(-220, 200, 120)...)
-	if operation.Command != CIRCLE || operation.Name != "" ||
-		!reflect.DeepEqual(operation.Args, NewNumberValues(-220, 200, 120)) {
-		t.Errorf("NewCircleOperation(-220,200,120) failed, got %s",
-			operation.ToString())
-	}
 	operation = newPolygonOperation(NewNumberValues(-221, 242, 123, 114, 455, 126)...)
 	if operation.Command != POLYGON || operation.Name != "" ||
 		!reflect.DeepEqual(operation.Args, NewNumberValues(-221, 242, 123, 114, 455, 126)) {
@@ -131,13 +125,6 @@ func TestToString(t *testing.T) {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"rect", expect, operationStr)
 	}
-	operation = newCircleOperation(NewNumberValues(-220, 200, 120)...)
-	operationStr = operation.ToString()
-	expect = fmt.Sprintf("circle [%d,%d,%d]", -220, 200, 120)
-	if operationStr != expect {
-		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
-			"circle", expect, operationStr)
-	}
 	operation = newPolygonOperation(NewNumberValues(-221, 242, 113, 123, 455, 126)...)
 	operationStr = operation.ToString()
 	expect = fmt.Sprintf("polygon [%d,%d,%d,%d,%d,%d]", -221, 242, 113, 123, 455, 126)
@@ -145,9 +132,9 @@ func TestToString(t *testing.T) {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"polygon", expect, operationStr)
 	}
-	operation = newOvalOperation(NewNumberValues(-221, 242, 113, 123, 455)...)
+	operation = newOvalOperation(NewNumberValues(-221, 242, 113, 123)...)
 	operationStr = operation.ToString()
-	expect = fmt.Sprintf("oval [%d,%d,%d,%d,%d]", -221, 242, 113, 123, 455)
+	expect = fmt.Sprintf("oval [%d,%d,%d,%d]", -221, 242, 113, 123)
 	if operationStr != expect {
 		t.Errorf("OperationToString(%s operation) failed! Expect %s, got %s",
 			"oval", expect, operationStr)
@@ -227,7 +214,7 @@ func TestToString(t *testing.T) {
 ///////////////////////////////////////////////////////////////////////////////
 // New Operations for convenience //////////////////////////////////////////////
 func newLineOperation(coords ...Value) Operation {
-	if len(coords) == 4 {
+	if len(coords) == int(ExpectArgNum(LINE)) {
 		return newOperationTypeDrawFixed(LINE, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
@@ -235,23 +222,15 @@ func newLineOperation(coords ...Value) Operation {
 }
 
 func newRectOperation(coords ...Value) Operation {
-	if len(coords) == 4 {
+	if len(coords) == int(ExpectArgNum(RECT)) {
 		return newOperationTypeDrawFixed(RECT, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
 	}
 }
 
-func newCircleOperation(coords ...Value) Operation {
-	if len(coords) == 3 {
-		return newOperationTypeDrawFixed(CIRCLE, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
-}
-
 func newOvalOperation(coords ...Value) Operation {
-	if len(coords) == 5 {
+	if len(coords) == int(ExpectArgNum(OVAL)) {
 		return newOperationTypeDrawFixed(OVAL, coords...)
 	} else {
 		return NewOperation(UNDEFINED)
@@ -275,7 +254,7 @@ func newRotateOperation(name string, v Value) Operation {
 }
 
 func newTransformOperation(name string, coords ...Value) Operation {
-	if len(coords) == 6 {
+	if len(coords) == int(ExpectArgNum(TRANSFORM)) {
 		return newOperationTypeAssign(TRANSFORM, name, coords...)
 	} else {
 		return NewOperation(UNDEFINED)

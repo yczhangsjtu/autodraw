@@ -22,15 +22,13 @@ func TestGetInstruction(t *testing.T) {
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
-		"circle 110 110 100",
-		"oval 110 110 100 50 50",
+		"oval 110 110 100 50",
 	}
 	results := []Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
-		{operation.CIRCLE,[]int16{110,110,100}},
-		{operation.OVAL,[]int16{110,110,100,50,50}},
+		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
 	}
 	for i := 0; i < len(tests); i++ {
 		parser := operation.NewLineParser()
@@ -44,6 +42,9 @@ func TestGetInstruction(t *testing.T) {
 		}
 		if oper.Command == operation.RECT {
 			args = expandRect(args)
+		}
+		if oper.Command == operation.OVAL {
+			args = expandOval(args)
 		}
 		inst,err := GetInstruction(oper.Command,args)
 		if err != nil {
@@ -62,8 +63,7 @@ func TestBytesToInstructions(t *testing.T) {
 		{operation.LINE,[]int16{120,300,110,310}},
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
-		{operation.CIRCLE,[]int16{110,110,100}},
-		{operation.OVAL,[]int16{110,110,100,50,50}},
+		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
 	}
 	bytes := InstructionsToBytes(tests)
 	results,err := BytesToInstructions(bytes)

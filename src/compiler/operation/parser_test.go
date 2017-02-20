@@ -22,8 +22,7 @@ func BenchmarkParseLine(b *testing.B) {
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
-		"circle 110 110 100",
-		"oval 110 110 100 50 50",
+		"oval 110 110 100 50",
 		"set s 110",
 		"use T",
 		"push T",
@@ -37,7 +36,6 @@ func BenchmarkParseLine(b *testing.B) {
 		"import no-plane",
 		"line 120 300 110",
 		"rect 110 0 0",
-		"circle 110 110",
 	}
 	for i := 0; i < b.N; i++ {
 		for _, test := range tests {
@@ -54,8 +52,7 @@ func TestParseLine(t *testing.T) {
 		"line 120 300 110 310",
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
-		"circle 110 110 100",
-		"oval 110 110 100 50 50",
+		"oval 110 110 100 50",
 		"set s 110",
 		"use T",
 		"push T",
@@ -68,15 +65,13 @@ func TestParseLine(t *testing.T) {
 		"import plane",
 		"line 120 300 110",
 		"rect 110 0 0",
-		"circle 110 110",
 	}
 	expects := []Operation{
 		NewOperation(UNDEFINED),
 		newLineOperation(NewNumberValues(120, 300, 110, 310)...),
 		newRectOperation(NewNumberValues(110, 0, 0, 110)...),
 		newPolygonOperation(NewNumberValues(110, 100, 0, 10, 210, 220)...),
-		newCircleOperation(NewNumberValues(110, 110, 100)...),
-		newOvalOperation(NewNumberValues(110, 110, 100, 50, 50)...),
+		newOvalOperation(NewNumberValues(110, 110, 100, 50)...),
 		newSetOperation("s", NewNumberValue(110)),
 		newUseOperation("T"),
 		newPushOperation("T"),

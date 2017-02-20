@@ -23,14 +23,13 @@ func TestUpdate(t *testing.T) {
 		{operation.LINE,[]int16{120,300,110,310}},
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
-		{operation.CIRCLE,[]int16{110,110,100}},
-		//{operation.OVAL,[]int16{110,110,100,50,50}},
+		//{operation.OVAL,[]int16{100,100,100,0,0,100,0,0,0,-100,-100,0,-100,-100,-100,100}},
 	}
 	expect := "\\begin{tikzpicture}\n"+
 		"  \\draw (1.2,3) -- (1.1,3.1);\n"+
 		"  \\draw (1.1,0) -- (1.1,1.1) -- (0,1.1) -- (0,0) -- cycle;\n"+
 		"  \\draw (1.1,1) -- (0,0.1) -- (2.1,2.2) -- cycle;\n"+
-		"  \\draw (1.1,1.1) circle (1);\n"+
+		//"  \\draw (1,1) .. controls (1,0.5) and (0.5,0.5) .. (0,1) .. controls (0,0.5) and (0,-0.5) .. (0,-1) .. controls (-0.5,-0.5) and (-1,-0.5) .. (-1,-1) .. controls (-1,0) and (0,1) .. (1,1);\n"+
 		"\\end{tikzpicture}\n"
 	tz := NewTikz()
 	for _,inst := range tests {
@@ -55,13 +54,13 @@ func TestInstToTikz(t *testing.T) {
 		{operation.LINE,[]int16{120,300,110,310}},
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
-		{operation.CIRCLE,[]int16{110,110,100}},
+		//{operation.OVAL,[]int16{100,100,100,0,0,100,0,0,0,-100,-100,0,-100,-100,-100,100}},
 	}
 	expects := []string {
 		"\\draw (1.2,3) -- (1.1,3.1);",
 		"\\draw (1.1,0) -- (1.1,1.1) -- (0,1.1) -- (0,0) -- cycle;",
 		"\\draw (1.1,1) -- (0,0.1) -- (2.1,2.2) -- cycle;",
-		"\\draw (1.1,1.1) circle (1);",
+		//"\\draw (1,1) .. controls (1,0.5) and (0.5,0.5) .. (0,1) .. controls (0,0.5) and (0,-0.5) .. (0,-1) .. controls (-0.5,-0.5) and (-1,-0.5) .. (-1,-1) .. controls (-1,0) and (0,1) .. (1,1);",
 	}
 	for i,inst := range tests {
 		tikzCode,err := InstToTikz(inst,1.0)

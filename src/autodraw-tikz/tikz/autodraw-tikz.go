@@ -76,11 +76,9 @@ func InstToTikz(inst instruction.Instruction, scale float64) (string,error) {
 	case operation.POLYGON:
 		return fmt.Sprintf("\\draw %s -- cycle;",GenerateFloatPairs("--",
 				IntsToScaledFloats(inst.Args[1:],scale))),nil
-	case operation.CIRCLE:
-		return fmt.Sprintf("\\draw %s;",GenerateFloatPairs("circle",
-					IntsToScaledFloats(inst.Args,scale))),nil
 	case operation.OVAL:
-		fallthrough
+		return fmt.Sprintf("\\draw %s;",GenerateFloatPairsCurve(
+				IntsToScaledFloats(inst.Args,scale))),nil
 	default:
 		return "",NewTikzError("invalid instruction: "+inst.ToString())
 	}
@@ -114,6 +112,28 @@ func GenerateFloatPairs(connect string, args []float64) string {
 	}
 	if len(args)%2 == 1 {
 		ret += fmt.Sprintf(fmt.Sprintf(" %s %s",connect,"(%g)"),args[len(args)-1])
+	}
+	return ret
+}
+
+func GenerateFloatPairsCurve(args []float64) string {
+	if len(args) < 2 {
+		return ""
+	}
+	if len(args)%4 != 0 {
+		return ""
+	}
+	args = append(args,args[0],args[1])
+	num := len(args)/4
+	ret := fmt.Sprintf("(%g,%g)",args[0],args[1])
+	for i := 0; i < num; i++ {
+		x0,y0 := args[i*4],args[i*4+1]
+		x1,y1 := args[i*4+2],args[i*4+3]
+		x2,y2 := args[i*4+4],args[i*4+5]
+		bx1,by1 := x0*0.45+x1*0.55,y0*0.45+y1*0.55
+		bx2,by2 := x2*0.45+x1*0.55,y2*0.45+y1*0.55
+		ret += fmt.Sprintf(" .. controls (%g,%g) and (%g,%g) .. (%g,%g)",
+			bx1,by1,bx2,by2,x2,y2)
 	}
 	return ret
 }
