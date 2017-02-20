@@ -21,7 +21,7 @@ import "log"
 import "io/ioutil"
 import "compiler/operation"
 import "compiler/instruction"
-import "autodraw-tikz/tikz"
+import "tikz/tikz"
 
 const Version string = "1.0"
 
