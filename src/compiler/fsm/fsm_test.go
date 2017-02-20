@@ -38,6 +38,11 @@ func TestFSMUpdate(t *testing.T) {
 		"translate W Bob Carror",
 		"set Q T",
 		"set P Q",
+		"begin subfigure",
+		"set X 0",
+		"set Y 1",
+		"set M 2",
+		"end",
 		"set Z X",
 		"set X Y",
 		"set U W",
@@ -54,6 +59,7 @@ func TestFSMUpdate(t *testing.T) {
 		"use Q",
 		"rect 110 0 0 110",
 		"use P",
+		"draw subfigure",
 		"polygon 110 100 0 10 210 220",
 		"circle 110 110 100",
 		"oval 110 110 100 50 120",
@@ -63,6 +69,9 @@ func TestFSMUpdate(t *testing.T) {
 	}
 	transforms := []string{
 		"T", "P", "Q", "U", "V", "W", "X", "Y", "Z",
+	}
+	unexpect := []string {
+		"M",
 	}
 	for _, line := range tests {
 		parser := operation.NewLineParser()
@@ -82,6 +91,12 @@ func TestFSMUpdate(t *testing.T) {
 		}
 		if value.Number != v {
 			t.Errorf("Expect %s = %d, got %d", k, v, value.Number)
+		}
+	}
+	for _, v := range unexpect {
+		_, ok := fsm.Lookup(v)
+		if ok {
+			t.Errorf("%s should not be found", v)
 		}
 	}
 	for _, tf := range transforms {

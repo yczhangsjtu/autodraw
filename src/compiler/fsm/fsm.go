@@ -283,6 +283,29 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 		fsm.vartable.Assign(
 			oper.Name, operation.NewTransformValue(ArgsToTranslate(tfvalues)))
 	case operation.DRAW:
+		operlist,ok := (*fsm.opertable)[oper.Name]
+		if !ok {
+			return NewFSMError(
+				oper.ToString(), "figure does not exist: "+oper.Name)
+		}
+		subfsm := NewFSM()
+		hasTmpTransform := fsm.tmptransform != nil
+		if hasTmpTransform {
+			fsm.tfstack.PushTransform(fsm.tmptransform)
+			fsm.tmptransform = nil
+		}
+		subfsm.PushTransform(fsm.tfstack.GetTransform())
+		if hasTmpTransform {
+			fsm.tfstack.PopTransform()
+		}
+		for _,suboper := range operlist {
+			err := subfsm.Update(suboper)
+			if err != nil {
+				return NewFSMError(
+					oper.ToString(),"error in figure "+oper.Name+":\n\t"+err.Error())
+			}
+		}
+		fsm.instlist = append(fsm.instlist,subfsm.instlist...)
 	case operation.IMPORT:
 	case operation.BEGIN:
 		_,ok := (*fsm.opertable)[oper.Name]
