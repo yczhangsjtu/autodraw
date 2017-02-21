@@ -1,0 +1,50 @@
+begin quater
+line 0 270 27 0
+line 0 243 54 0
+line 0 216 81 0
+line 0 189 108 0
+line 0 162 135 0
+line 0 135 162 0
+line 0 108 189 0
+line 0 81 216 0
+line 0 54 243 0
+line 0 27 270 0
+end
+
+begin star
+scale flipx -100 100
+scale flipy 100 -100
+scale rotate180 -100 -100
+draw quater
+use flipx
+draw quater
+use flipy
+draw quater
+use rotate180
+draw quater
+rect -270 -270 270 270
+end
+
+rotate r 45
+scale squeeze 100 50
+transform right 100 0 270 35 100 -365
+transform left  100 0 -270 -35 100 -365
+scale s70 70 100
+
+push squeeze
+push r
+draw star
+pop
+pop
+
+push s70
+push right
+draw star
+pop
+pop
+
+push s70
+push left
+draw star
+pop
+pop
