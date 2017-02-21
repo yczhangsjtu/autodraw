@@ -3,15 +3,22 @@ package autodraw;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.TextArea;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import autodraw.Canvas;
 
-public class Main extends JFrame {
+public class Main extends JFrame implements KeyListener {
 
 	private static final long serialVersionUID = -2449636255315974141L;
 	private Canvas canvas;
+	private JTextArea text;
 
 	public Main(String s) {
 		super(s);
@@ -19,12 +26,27 @@ public class Main extends JFrame {
 		this.canvas.setFocusable(true);
 		this.canvas.setSize(new Dimension(800,600));
 		this.canvas.setLocation(0,0);
+		this.canvas.setOriginx(this.canvas.getWidth()/2);
+		this.canvas.setOriginy(this.canvas.getHeight()/2);
+		this.canvas.addKeyListener(this);
 		
-		add(this.canvas);
+		this.text = new JTextArea(10,30);
+		this.text.setEditable(false);
+		this.canvas.setOutput(this.text);
+		JScrollPane scrollPane = new JScrollPane(this.text);
+		scrollPane.setSize(new Dimension(200,600));
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BorderLayout());
+		rightPanel.add(scrollPane);
+		rightPanel.setSize(new Dimension(200,600));
+
 		setLayout(new BorderLayout());
-		setSize(800,600);
+		add(rightPanel,BorderLayout.EAST);
+		add(this.canvas,BorderLayout.CENTER);
+		setSize(1100,600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
+
 		setVisible(true);
 	}
 
@@ -39,4 +61,22 @@ public class Main extends JFrame {
     {
         super.paint(g);
     }
+
+	public void keyPressed(KeyEvent e) {
+		switch(e.getKeyCode()) {
+		case KeyEvent.VK_ESCAPE:
+		case KeyEvent.VK_Q:
+			dispose();
+		}
+	}
+
+	public void keyReleased(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void keyTyped(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

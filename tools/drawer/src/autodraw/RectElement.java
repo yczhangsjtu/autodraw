@@ -6,6 +6,12 @@ public class RectElement extends Element {
 	public RectElement(int x1, int y1, int x2, int y2) {
 		super();
 		this.type = ElementType.RECT;
+		if(x1 > x2) {
+			int tmp = x1; x1 = x2; x2 = tmp;
+		}
+		if(y1 > y2) {
+			int tmp = y1; y1 = y2; y2 = tmp;
+		}
 		this.arguments.add(x1);
 		this.arguments.add(y1);
 		this.arguments.add(x2);
@@ -17,5 +23,9 @@ public class RectElement extends Element {
 		g2d.drawRect(this.arguments.get(0), this.arguments.get(1),
 				this.arguments.get(2)-this.arguments.get(0),
 				this.arguments.get(3)-this.arguments.get(1));
+	}
+	
+	public String getType() {
+		return "rect";
 	}
 }

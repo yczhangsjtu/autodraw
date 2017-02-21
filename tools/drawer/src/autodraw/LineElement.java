@@ -17,4 +17,8 @@ public class LineElement extends Element {
 		g2d.drawLine(this.arguments.get(0), this.arguments.get(1),
 				this.arguments.get(2), this.arguments.get(3));
 	}
+	
+	public String getType() {
+		return "line";
+	}
 }
