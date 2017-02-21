@@ -299,6 +299,10 @@ public class Canvas extends JPanel implements ActionListener,MouseListener,Mouse
 		case KeyEvent.VK_C:
 			this.elementList.clear();
 			break;
+		case KeyEvent.VK_Z:
+			if(this.elementList.size()>0)
+				this.elementList.remove(this.elementList.size()-1);
+			break;
 		case KeyEvent.VK_1:
 		case KeyEvent.VK_2:
 		case KeyEvent.VK_3:

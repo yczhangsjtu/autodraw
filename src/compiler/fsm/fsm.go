@@ -288,6 +288,7 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 				oper.ToString(), "figure does not exist: "+oper.Name)
 		}
 		subfsm := NewFSM()
+		subfsm.opertable = fsm.opertable
 		hasTmpTransform := fsm.tmptransform != nil
 		if hasTmpTransform {
 			fsm.tfstack.PushTransform(fsm.tmptransform)
@@ -298,6 +299,9 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 			fsm.tfstack.PopTransform()
 		}
 		for _,suboper := range operlist {
+			if fsm.Verbose {
+				fmt.Printf("Subfigure %s: %s\n",oper.Name,suboper.ToString())
+			}
 			err := subfsm.Update(suboper)
 			if err != nil {
 				return NewFSMError(
