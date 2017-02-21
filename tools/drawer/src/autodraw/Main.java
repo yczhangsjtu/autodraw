@@ -2,6 +2,8 @@ package autodraw;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
+
 import javax.swing.JFrame;
 
 import autodraw.Canvas;
@@ -16,6 +18,7 @@ public class Main extends JFrame {
 		this.canvas = new Canvas();
 		this.canvas.setFocusable(true);
 		this.canvas.setSize(new Dimension(800,600));
+		this.canvas.setLocation(0,0);
 		
 		add(this.canvas);
 		setLayout(new BorderLayout());
@@ -32,4 +35,8 @@ public class Main extends JFrame {
 		new Main("Autodraw");
 	}
 
+    public void paint(Graphics g)
+    {
+        super.paint(g);
+    }
 }
