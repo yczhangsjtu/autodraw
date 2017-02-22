@@ -172,10 +172,16 @@ func GetCommand(name string) (int16,bool) {
 }
 
 func GetName(op int16) string {
+	if int(op) >= len(operationNames) {
+		return "undefined"
+	}
 	return operationNames[op]
 }
 
 func GetType(op int16) int16 {
+	if int(op) >= len(operationTypes) {
+		return UNDEFINED
+	}
 	return operationTypes[op]
 }
 

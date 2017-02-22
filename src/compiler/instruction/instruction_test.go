@@ -23,12 +23,20 @@ func TestGetInstruction(t *testing.T) {
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
 		"oval 110 110 100 50",
+		"polygon 110 100 0 10 210 220",
+		"oval 110 110 100 50",
+		"rect 110 0 0 110",
+		"line 120 300 110 310",
 	}
 	results := []Instruction {
 		{operation.LINE,[]int16{120,300,110,310}},
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
+		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
+		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
+		{operation.LINE,[]int16{120,300,110,310}},
 	}
 	for i := 0; i < len(tests); i++ {
 		parser := operation.NewLineParser()
@@ -64,11 +72,15 @@ func TestBytesToInstructions(t *testing.T) {
 		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
 		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
 		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
+		{operation.POLYGON,[]int16{6,110,100,0,10,210,220}},
+		{operation.OVAL,[]int16{210,110,210,160,110,160,10,160,10,110,10,60,110,60,210,60}},
+		{operation.RECT,[]int16{110,0,110,110,0,110,0,0}},
+		{operation.LINE,[]int16{120,300,110,310}},
 	}
 	bytes := InstructionsToBytes(tests)
 	results,err := BytesToInstructions(bytes)
 	if err != nil {
-		t.Errorf("Error in BytesToInstructions: %s",err.Error)
+		t.Errorf("Error in BytesToInstructions: %s",err.Error())
 	}
 	if len(tests) != len(results) {
 		t.Errorf("Got wrong number of results: %d vs %d",len(results),len(tests))

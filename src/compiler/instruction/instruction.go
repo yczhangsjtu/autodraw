@@ -68,60 +68,73 @@ func InstructionsToBytes(insts []Instruction) []byte {
 	return ret
 }
 
-func ComposeBytes(b1,b2 byte) int16 {
+func composeBytes(b1,b2 byte) int16 {
 	return int16(uint(b1)*256+uint(b2))
+}
+
+func getInt16(data []byte, i *int) (int16,error) {
+	if (*i)*2+1 >= len(data) {
+		return 0,NewInstructionError("index out of range")
+	}
+	ret := composeBytes(data[(*i)*2],data[(*i)*2+1])
+	(*i)++
+	return ret,nil
+}
+
+func getInts16(data []byte, ptr *int, count int) ([]int16,error) {
+	ret := make([]int16,count)
+	var err error
+	for i := 0; i < count; i++ {
+		ret[i],err = getInt16(data,ptr)
+		if err != nil {
+			return ret,err
+		}
+	}
+	return ret,err
 }
 
 func BytesToInstructions(data []byte) ([]Instruction,error) {
 	ptr := 0
 	ret := []Instruction{}
 	for {
-		if ptr+1 >= len(data) {
+		if ptr*2+1 >= len(data) {
 			return ret,nil
 		}
-		command := ComposeBytes(data[ptr],data[ptr+1])
-		if int(command) >= operation.GetOperationNum() {
-			return ret,NewInstructionError(
-				"Invalid command number: "+strconv.Itoa(int(command)))
-		}
+
+		command,err := getInt16(data,&ptr)
 		commandType := operation.GetType(command)
-		ptr += 2
-		var argNum int16
-		if commandType == operation.DRAW_FIXED {
-			argNum = int16(operation.FinalArgNum(command))
-		} else if commandType == operation.DRAW_UNDETERMINED {
-			if ptr+1 >= len(data) {
-				return ret,NewInstructionError(
-					"Not enough arguments for command at position "+strconv.Itoa(ptr-2))
-			}
-			argNum = ComposeBytes(data[ptr],data[ptr+1])
-			ptr += 2
-		}
-		if commandType == operation.DRAW_FIXED ||
-			commandType == operation.DRAW_UNDETERMINED {
-			if ptr+int(argNum*2) > len(data) {
-				return ret,NewInstructionError(
-					"Not enough arguments for command at position "+strconv.Itoa(ptr-2))
-			}
-			args := make([]int16,argNum)
-			for i := 0; i < int(argNum); i++ {
-				args[i] = ComposeBytes(data[ptr+i*2],data[ptr+1+i*2])
-			}
-			inst,err := GetInstruction(command,args)
-			if err != nil {
-				return ret,err
-			}
-			ret = append(ret,inst)
-			ptr += int(argNum*2)
-		} else {
+		if commandType != operation.DRAW_FIXED &&
+			commandType != operation.DRAW_UNDETERMINED {
 			return ret,NewInstructionError(
 				"Invalid command number "+strconv.Itoa(int(command)))
 		}
+
+		var argNum int16
+		if commandType == operation.DRAW_FIXED {
+			argNum = int16(operation.FinalArgNum(command))
+		} else {
+			argNum,err = getInt16(data,&ptr)
+			if err != nil {
+				return ret,err
+			}
+		}
+
+		args,err := getInts16(data,&ptr,int(argNum))
+		if err != nil {
+			return ret,err
+		}
+		inst,err := GetInstruction(command,args)
+		if err != nil {
+			return ret,err
+		}
+		ret = append(ret,inst)
 	}
 	return ret,nil
 }
 
 func GetInstruction(command int16, args []int16) (Instruction,error) {
+	inst := NewInstruction()
+	inst.Command = command
 	switch command {
 	case operation.RECT:
 		fallthrough
@@ -134,24 +147,24 @@ func GetInstruction(command int16, args []int16) (Instruction,error) {
 			  " requires "+strconv.Itoa(int(operation.FinalArgNum(command)))+
 				" args, got "+strconv.Itoa(len(args)))
 		}
-		inst := NewInstruction()
-		inst.Command = command
 		inst.Args = args
 		return inst,nil
 	case operation.POLYGON:
 		if len(args) < 4 || len(args)%2 == 1 {
-		return NewInstruction(),NewInstructionError(
-			"invalid number of arguments: got "+
-			strconv.Itoa(len(args))+" for polygon")
+			return NewInstruction(),NewInstructionError(
+				"invalid number of arguments: got "+
+				strconv.Itoa(len(args))+" for polygon")
 		}
-		inst := NewInstruction()
-		inst.Command = command
-		inst.Args = append([]int16{int16(len(args))},args...)
+		inst.Args = addLengthPrefix(args)
 		return inst,nil
 	default:
 		return NewInstruction(),NewInstructionError(
 			"invalid draw command: "+operation.GetName(command))
 	}
+}
+
+func addLengthPrefix(args []int16) []int16 {
+	return append([]int16{int16(len(args))},args...)
 }
 
 func expandRect(args []int16) []int16 {
