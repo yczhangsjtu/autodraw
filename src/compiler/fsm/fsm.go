@@ -147,6 +147,9 @@ func (vartable *VarTable) Assign(name string, v operation.Value) error {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Methods for FSM class //////////////////////////////////////////////////////
+func (fsm *FSM) appendOperation(oper operation.Operation) {
+	(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+}
 
 /* Update is the most crucial method of FSM: takes an operation and update its
 own state.
@@ -161,24 +164,32 @@ table.
 For operations like USE, PUSH and POP the FSM modifies its matrix stack.
 */
 func (fsm *FSM) Update(oper operation.Operation) error {
+	// If there has been a BEGIN not yet ENDed, i.e. in a subfigure, just try to
+	// log the operation into the corresponding operation list of the figure name
 	if fsm.current != "" {
 		switch oper.Command {
+		// One more level of begin, doesn't have to evaluate it (that's the job of
+		// the subfigure), but have to count the number of BEGINs to know which END
+		// is the final END
 		case operation.BEGIN:
 			fsm.beginLevel++
-			(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+			fsm.appendOperation(oper)
 			return nil
+		// Decrease a level of begin, of there is more than one level
+		// If only one level, end the subfigure
 		case operation.END:
 			fsm.beginLevel--
 			if fsm.beginLevel > 0 {
-				(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+				fsm.appendOperation(oper)
 			} else if fsm.beginLevel == 0 {
 				fsm.current = ""
 				return nil
 			} else {
 				return NewFSMError(oper.ToString(),"too many end operation")
 			}
+		// Ordinary operations, simply append
 		default:
-			(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
+			fsm.appendOperation(oper)
 			return nil
 		}
 	}
@@ -359,9 +370,18 @@ func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
 // FSM.ApplyTransform apply the current transformation matrix to the
 // coordinates list. The behavior is different for different drawing types.
 //
-// For LINE, RECT and POLYGON, take each pair of integers as (x,y) coordinates
+// For LINE, POLYGON, take each pair of integers as (x,y) coordinates
 // and apply the transformation.
 //
+// For RECT and OVAL, some kind of expansion has to be applied to the arguments
+// so that the number of arguments is enough to represent the graph after
+// transformation.
+//
+// For RECT, finally there will be 4 points stored, i.e. the four vertices
+//
+// For OVAL, finally 8 points are stored in instruction, which is enough to
+// construct an oval after affine transformation using bezier curve
+// TODO: in fact, four points are enough for oval
 func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 	result := make([]int16, len(coords))
 	copy(result, coords)
