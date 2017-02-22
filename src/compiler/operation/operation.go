@@ -14,11 +14,12 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
-import "os"
-import "fmt"
-import "reflect"
-import "unicode"
-import "compiler/transformer"
+import (
+	"fmt"
+	"reflect"
+	"unicode"
+	"compiler/transformer"
+)
 
 // Operations
 const (
@@ -59,15 +60,13 @@ const (
 	STATE
 )
 
-const Version string = "1.0"
-
-var OperationNames = []string{
+var operationNames = []string{
 	"undefined", "line", "rect", "oval", "polygon", "set", "use",
 	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
 	"begin", "end",
 }
 
-var OperationTypes = []int16{
+var operationTypes = []int16{
 	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
 	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN, ASSIGN, STATE, STATE,
 	STATE, SINGLE,
@@ -77,7 +76,7 @@ var expectName = []bool{
 	false, false, false, true, false, true,
 }
 
-var expectArgNum = []int16{
+var expectArgNum = []int{
 	0, 4, 4, 4, 0, 1, 0,
 	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
@@ -91,13 +90,13 @@ var needArgNum = []bool{
 	false, false, true, false, false, false,
 }
 
-var finalArgNum = []int16{
+var finalArgNum = []int{
 	0, 4, 8,16, 0, 1, 0,
 	0, 0, 6, 1, 2, 2, 0, 0,
 	0, 0,
 }
 
-var OperationNameMap = map[string]int16{
+var operationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
 	"pop": POP, "transform": TRANSFORM, "rotate": ROTATE, "scale": SCALE,
@@ -118,26 +117,24 @@ type Operation struct {
 	Args    []Value
 }
 
-var Verbose bool = false
-
 func ExpectName(op int16) bool {
-	return expectName[OperationTypes[op]]
+	return expectName[GetType(op)]
 }
 
-func ExpectArgNum(op int16) int16 {
+func ExpectArgNum(op int16) int {
 	return expectArgNum[op]
 }
 
 func ExpectArgs(op int16) bool {
-	return expectArgs[OperationTypes[op]]
+	return expectArgs[GetType(op)]
 }
 
-func FinalArgNum(op int16) int16 {
+func FinalArgNum(op int16) int {
 	return finalArgNum[op]
 }
 
 func NeedArgNum(op int16) bool {
-	return needArgNum[OperationTypes[op]]
+	return needArgNum[GetType(op)]
 }
 
 func NewNumberValue(x int16) Value {
@@ -146,8 +143,8 @@ func NewNumberValue(x int16) Value {
 
 func NewNumberValues(args ...int16) []Value {
 	ret := make([]Value, len(args))
-	for i, _ := range ret {
-		ret[i] = Value{INTEGER, "", args[i], nil}
+	for i, v := range args {
+		ret[i] = NewNumberValue(v)
 	}
 	return ret
 }
@@ -169,34 +166,36 @@ func NewOperation(op int16) Operation {
 	return operation
 }
 
+func GetCommand(name string) (int16,bool) {
+	ret,ok := operationNameMap[name]
+	return ret,ok
+}
+
+func GetName(op int16) string {
+	return operationNames[op]
+}
+
+func GetType(op int16) int16 {
+	return operationTypes[op]
+}
+
+func GetOperationNum() int {
+	return len(operationTypes)
+}
+
 func ValidName(name string) bool {
 	if len(name) == 0 {
 		return false
 	}
 	for i, c := range name {
-		if i == 0 {
-			if !unicode.IsLetter(c) {
+		if !unicode.IsLetter(c) {
+			if i == 0 {
 				return false
 			}
-		} else {
-			if !unicode.IsLetter(c) && !unicode.IsDigit(c) && c != '-' &&
-				c != '.' && c != '_' {
+			if !unicode.IsDigit(c) && c != '-' && c != '.' && c != '_' {
 				return false
 			}
 		}
-	}
-	return true
-}
-
-func ValidPath(path string) bool {
-	if len(path) == 0 {
-		return false
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return false
-	} else {
-		file.Close()
 	}
 	return true
 }
@@ -226,7 +225,7 @@ func ValuesPrint(vs []Value) {
 }
 
 func (op *Operation) Print() {
-	fmt.Printf("%s", OperationNames[op.Command])
+	fmt.Printf("%s", GetName(op.Command))
 	if op.Name != "" {
 		fmt.Printf(" %s", op.Name)
 	}
@@ -261,7 +260,7 @@ func ValuesToString(vs []Value) string {
 }
 
 func (op *Operation) ToString() string {
-	ret := fmt.Sprintf("%s", OperationNames[op.Command])
+	ret := fmt.Sprintf("%s", GetName(op.Command))
 	if op.Name != "" {
 		ret += fmt.Sprintf(" %s", op.Name)
 	}

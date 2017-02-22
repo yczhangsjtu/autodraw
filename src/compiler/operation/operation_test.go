@@ -21,7 +21,7 @@ import "reflect"
 
 func TestNewOperation(t *testing.T) {
 	var operation Operation
-	for i, v := range OperationNames {
+	for i, v := range operationNames {
 		id := int16(i)
 		operation = NewOperation(id)
 		if operation.Command != id || operation.Name != "" ||
@@ -103,7 +103,7 @@ func TestToString(t *testing.T) {
 	var operation Operation
 	var operationStr string
 	var expect string
-	for i, v := range OperationNames {
+	for i, v := range operationNames {
 		id := int16(i)
 		operation = NewOperation(id)
 		operationStr = operation.ToString()

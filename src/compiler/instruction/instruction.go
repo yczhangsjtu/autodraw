@@ -46,7 +46,7 @@ func (inst *Instruction) Equal(inst2 Instruction) bool {
 }
 
 func (inst *Instruction) ToString() string {
-	return fmt.Sprintf("%s %d",operation.OperationNames[inst.Command],inst.Args)
+	return fmt.Sprintf("%s %d",operation.GetName(inst.Command),inst.Args)
 }
 
 func (inst *Instruction) ToBytes() []byte {
@@ -80,15 +80,15 @@ func BytesToInstructions(data []byte) ([]Instruction,error) {
 			return ret,nil
 		}
 		command := ComposeBytes(data[ptr],data[ptr+1])
-		if int(command) >= len(operation.OperationTypes) {
+		if int(command) >= operation.GetOperationNum() {
 			return ret,NewInstructionError(
 				"Invalid command number: "+strconv.Itoa(int(command)))
 		}
-		commandType := operation.OperationTypes[command]
+		commandType := operation.GetType(command)
 		ptr += 2
 		var argNum int16
 		if commandType == operation.DRAW_FIXED {
-			argNum = operation.FinalArgNum(command)
+			argNum = int16(operation.FinalArgNum(command))
 		} else if commandType == operation.DRAW_UNDETERMINED {
 			if ptr+1 >= len(data) {
 				return ret,NewInstructionError(
@@ -130,7 +130,7 @@ func GetInstruction(command int16, args []int16) (Instruction,error) {
 	case operation.OVAL:
 		if len(args) != int(operation.FinalArgNum(command)) {
 			return NewInstruction(),NewInstructionError(
-				"invalid number of arguments: "+operation.OperationNames[command]+
+				"invalid number of arguments: "+operation.GetName(command)+
 			  " requires "+strconv.Itoa(int(operation.FinalArgNum(command)))+
 				" args, got "+strconv.Itoa(len(args)))
 		}
@@ -150,7 +150,7 @@ func GetInstruction(command int16, args []int16) (Instruction,error) {
 		return inst,nil
 	default:
 		return NewInstruction(),NewInstructionError(
-			"invalid draw command: "+operation.OperationNames[command])
+			"invalid draw command: "+operation.GetName(command))
 	}
 }
 

@@ -428,7 +428,7 @@ func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
 		return result, nil
 	default:
 		return result, NewArgError(
-			"invalid draw command: " + operation.OperationNames[command])
+			"invalid draw command: " + operation.GetName(command))
 	}
 }
 

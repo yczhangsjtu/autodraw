@@ -66,8 +66,6 @@ func main() {
 		return
 	}
 
-	operation.Verbose = verbose
-
 	if len(args) == 0 {
 		usage("Missing input file!")
 		return
@@ -85,6 +83,7 @@ func main() {
 	lineno := 1
 	compiler := fsm.NewFSM()
 	compiler.Verbose = verbose
+	parser := operation.NewLineParser()
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -92,7 +91,6 @@ func main() {
 		if line == "" {
 			continue
 		}
-		parser := operation.NewLineParser()
 		oper, err := parser.ParseLine(line)
 		if err != nil {
 			log.Fatal(err)

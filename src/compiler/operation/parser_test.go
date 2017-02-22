@@ -37,16 +37,15 @@ func BenchmarkParseLine(b *testing.B) {
 		"line 120 300 110",
 		"rect 110 0 0",
 	}
+	parser := NewLineParser()
 	for i := 0; i < b.N; i++ {
 		for _, test := range tests {
-			parser := NewLineParser()
 			parser.ParseLine(test)
 		}
 	}
 }
 
 func TestParseLine(t *testing.T) {
-	Verbose = false
 	tests := []string{
 		"undefined",
 		"line 120 300 110 310",
@@ -86,9 +85,9 @@ func TestParseLine(t *testing.T) {
 		NewOperation(UNDEFINED),
 		NewOperation(UNDEFINED),
 	}
+	parser := NewLineParser()
 
 	for i, test := range tests {
-		parser := NewLineParser()
 		result, err := parser.ParseLine(test)
 		if !expects[i].Equal(result) || result.Command != UNDEFINED && err != nil {
 			errorString := ""

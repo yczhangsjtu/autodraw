@@ -7,10 +7,8 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -19,7 +17,7 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
-public class Canvas extends JPanel implements ActionListener,MouseListener,MouseMotionListener,KeyListener {
+public class Canvas extends JPanel implements MouseListener,MouseMotionListener,KeyListener {
 
 	private static final long serialVersionUID = 3196872295964223375L;
 	
@@ -81,15 +79,6 @@ public class Canvas extends JPanel implements ActionListener,MouseListener,Mouse
 		addMouseListener(this);
 		addMouseMotionListener(this);
 	}
-
-	public void actionPerformed(ActionEvent ae) {
-		String cmd = ae.getActionCommand();
-		if(cmd.equals("")) {
-			
-		}
-		System.out.println("action");
-		repaint();
-	}
 	
 	public void paint(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
@@ -150,6 +139,12 @@ public class Canvas extends JPanel implements ActionListener,MouseListener,Mouse
 		g2d.setFont(new Font("TimesRoman",Font.PLAIN,12));
 		g2d.drawString(String.format("%d,%d", this.mousex-this.originx, -(this.mousey-this.originy)),
 				getWidth()-100, toolbarHeight*2/3);
+		drawMouse(g2d);
+	}
+
+	private void drawMouse(Graphics2D g2d) {
+		g2d.drawOval(this.mousex-5, this.mousey-5, 10, 10);
+		g2d.drawOval(this.mousex-1, this.mousey-1, 1, 1);
 	}
 
 	public void drawLineButton(Graphics2D g2d, int x, int y) {
@@ -207,8 +202,8 @@ public class Canvas extends JPanel implements ActionListener,MouseListener,Mouse
 	}
 
 	private void rectifyMouse() {
-		this.mousex = (this.mousex-this.originx)/this.grid*this.grid+this.originx;
-		this.mousey = (this.mousey-this.originy)/this.grid*this.grid+this.originy;
+		this.mousex = (int)Math.round((double)(this.mousex-this.originx)/this.grid)*this.grid+this.originx;
+		this.mousey = (int)Math.round((double)(this.mousey-this.originy)/this.grid)*this.grid+this.originy;;
 	}
 
 	public void mouseClicked(MouseEvent e) {
@@ -262,6 +257,8 @@ public class Canvas extends JPanel implements ActionListener,MouseListener,Mouse
 					this.elementList.add(new PolygonElement(this.pointBuffer));
 					this.pointBuffer = new ArrayList<Point>();
 				}
+			} else {
+				this.pointBuffer = new ArrayList<Point>();
 			}
 		}
 		repaint();
