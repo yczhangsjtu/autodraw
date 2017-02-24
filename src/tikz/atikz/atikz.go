@@ -19,7 +19,6 @@ import "fmt"
 import "os"
 import "log"
 import "io/ioutil"
-import "compiler/operation"
 import "compiler/instruction"
 import "tikz/tikz"
 
@@ -57,8 +56,6 @@ func main() {
 		usage("")
 		return
 	}
-
-	operation.Verbose = verbose
 
 	if len(args) == 0 {
 		usage("Missing input file!")
