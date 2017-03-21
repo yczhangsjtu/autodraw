@@ -1,5 +1,6 @@
 package autodraw;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class LineElement extends Element {
@@ -17,7 +18,7 @@ public class LineElement extends Element {
 	}
 	
 	public void draw(Graphics2D g2d) {
-		super.draw(g2d);
+		g2d.setColor(Color.black);
 		g2d.drawLine(this.arguments.get(0), this.arguments.get(1),
 				this.arguments.get(2), this.arguments.get(3));
 	}

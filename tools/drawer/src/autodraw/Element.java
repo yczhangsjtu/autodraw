@@ -1,10 +1,9 @@
 package autodraw;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 
-public class Element {
+abstract public class Element {
 	
 	public enum ElementType {
 		UNDEFINED, LINE, RECT, POLYGON, OVAL
@@ -18,17 +17,10 @@ public class Element {
 		this.arguments = new ArrayList<Integer>();
 	}
 	
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		Element e = new Element();
-		e.type = this.type;
-		e.arguments.addAll(this.arguments);
-		return e;
-	}
-	
-	public String getType() {
-		return "undefined";
-	}
+	public abstract String getType();
+	public abstract void draw(Graphics2D g2d);
+	public abstract Element translated(int originx, int originy)
+			throws CloneNotSupportedException;
 	
 	public String toString() {
 		String ret = getType();
@@ -38,9 +30,6 @@ public class Element {
 		return ret;
 	}
 	
-	public void draw(Graphics2D g2d) {
-		g2d.setColor(Color.black);
-	}
 	
 	public void translate(int originx, int originy) {
 		for(int i = 0; i < this.arguments.size(); i++) {
@@ -49,10 +38,4 @@ public class Element {
 		}
 	}
 
-	public Element translated(int originx, int originy)
-			throws CloneNotSupportedException {
-		Element e = (Element)this.clone();
-		e.translate(originx, originy);
-		return e;
-	}
 }
