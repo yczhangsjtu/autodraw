@@ -3,6 +3,9 @@ package autodraw;
 import java.awt.Graphics2D;
 
 public class OvalElement extends Element {
+	private OvalElement() {
+		
+	}
 	public OvalElement(int x, int y, int a, int b) {
 		super();
 		this.type = ElementType.OVAL;
@@ -23,8 +26,17 @@ public class OvalElement extends Element {
 		return "oval";
 	}
 
-	public Element translate(int originx, int originy) {
-		Element e = new Element();
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		OvalElement e = new OvalElement();
+		e.type = this.type;
+		e.arguments.addAll(this.arguments);
+		return e;
+	}
+	
+	public OvalElement translated(int originx, int originy) {
+		OvalElement e = new OvalElement();
 		e.type = this.type;
 		e.arguments.addAll(this.arguments);
 		e.arguments.set(0, e.arguments.get(0)-originx);

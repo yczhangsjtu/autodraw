@@ -18,18 +18,16 @@ public class Element {
 		this.arguments = new ArrayList<Integer>();
 	}
 	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		Element e = new Element();
+		e.type = this.type;
+		e.arguments.addAll(this.arguments);
+		return e;
+	}
+	
 	public String getType() {
-		if(this.type == ElementType.LINE) {
-			return "line";
-		} else if(this.type == ElementType.RECT) {
-			return "rect";
-		} else if(this.type == ElementType.OVAL) {
-			return "oval";
-		} else if(this.type == ElementType.POLYGON) {
-			return "polygon";
-		} else {
-			return "undefined";
-		}
+		return "undefined";
 	}
 	
 	public String toString() {
@@ -44,13 +42,17 @@ public class Element {
 		g2d.setColor(Color.black);
 	}
 	
-	public Element translate(int originx, int originy) {
-		Element e = new Element();
-		e.type = this.type;
+	public void translate(int originx, int originy) {
 		for(int i = 0; i < this.arguments.size(); i++) {
-			if(i%2 == 0) e.arguments.add(this.arguments.get(i)-originx);
-			else e.arguments.add(originy-this.arguments.get(i));
+			if(i%2 == 0) this.arguments.set(i,this.arguments.get(i)-originx);
+			else this.arguments.set(i,originy-this.arguments.get(i));
 		}
+	}
+
+	public Element translated(int originx, int originy)
+			throws CloneNotSupportedException {
+		Element e = (Element)this.clone();
+		e.translate(originx, originy);
 		return e;
 	}
 }

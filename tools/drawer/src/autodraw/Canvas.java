@@ -288,7 +288,12 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 		case KeyEvent.VK_S:
 			this.output.setText("");
 			for(Element elem: this.elementList) {
-				this.output.setText(this.output.getText()+elem.translate(this.originx, this.originy).toString()+"\n");
+				try {
+					this.output.setText(this.output.getText()+
+							elem.translated(this.originx, this.originy).toString()+"\n");
+				} catch (CloneNotSupportedException e1) {
+					e1.printStackTrace();
+				}
 			}
 			break;
 		case KeyEvent.VK_C:

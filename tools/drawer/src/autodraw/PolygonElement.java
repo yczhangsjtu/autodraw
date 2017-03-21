@@ -5,6 +5,9 @@ import java.awt.Point;
 import java.util.ArrayList;
 
 public class PolygonElement extends Element {
+	private PolygonElement() {
+		
+	}
 	public PolygonElement(ArrayList<Point> args) {
 		super();
 		this.type = ElementType.POLYGON;
@@ -27,5 +30,20 @@ public class PolygonElement extends Element {
 	
 	public String getType() {
 		return "polygon";
+	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		PolygonElement e = new PolygonElement();
+		e.type = this.type;
+		e.arguments.addAll(this.arguments);
+		return e;
+	}
+	
+	public PolygonElement translated(int originx, int originy)
+			throws CloneNotSupportedException {
+		PolygonElement e = (PolygonElement)this.clone();
+		e.translate(originx, originy);
+		return e;
 	}
 }

@@ -3,6 +3,9 @@ package autodraw;
 import java.awt.Graphics2D;
 
 public class RectElement extends Element {
+	private RectElement() {
+		
+	}
 	public RectElement(int x1, int y1, int x2, int y2) {
 		super();
 		this.type = ElementType.RECT;
@@ -27,5 +30,21 @@ public class RectElement extends Element {
 	
 	public String getType() {
 		return "rect";
+	}
+
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		RectElement e = new RectElement();
+		e.type = this.type;
+		e.arguments.addAll(this.arguments);
+		return e;
+	}
+	
+	public RectElement translated(int originx, int originy)
+			throws CloneNotSupportedException {
+		RectElement e = (RectElement)this.clone();
+		e.translate(originx, originy);
+		return e;
 	}
 }
