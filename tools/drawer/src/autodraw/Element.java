@@ -30,7 +30,6 @@ abstract public class Element {
 		return ret;
 	}
 	
-	
 	public void translate(int originx, int originy) {
 		for(int i = 0; i < this.arguments.size(); i++) {
 			if(i%2 == 0) this.arguments.set(i,this.arguments.get(i)-originx);
