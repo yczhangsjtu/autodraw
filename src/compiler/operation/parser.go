@@ -14,22 +14,9 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
-import "strings"
-import "strconv"
-
-const (
-	INVALID int16 = iota
-	COMMAND
-	NAME
-	NUMBER
-)
-
-const (
-	NEED_COMMAND int16 = iota
-	NEED_NAME
-	NEED_VALUE
-	FINISH
-	ERROR
+import (
+	"strings"
+	"strconv"
 )
 
 type LineParser struct {
@@ -45,35 +32,6 @@ type LineParser struct {
 	args    []Value
 
 	state int16
-}
-
-type ParseError struct {
-	line   string
-	token  string
-	reason string
-}
-
-func NewParseError(line, token, reason string) *ParseError {
-	return &ParseError{line, token, reason}
-}
-
-func (e *ParseError) Error() string {
-	return e.line + ": " + e.token + " -- " + e.reason
-}
-
-func tokenIdentify(token string) int16 {
-	_, ok := GetCommand(token)
-	if ok {
-		return COMMAND
-	}
-	if ValidName(token) {
-		return NAME
-	}
-	_, err := strconv.ParseInt(token, 10, 16)
-	if err != nil {
-		return INVALID
-	}
-	return NUMBER
 }
 
 func NewLineParser() LineParser {

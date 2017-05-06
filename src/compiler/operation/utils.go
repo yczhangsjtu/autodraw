@@ -15,45 +15,38 @@
 package operation
 
 import (
-	"fmt"
-	"reflect"
+	"unicode"
+	"strconv"
 )
 
-type Operation struct {
-	Command int16
-	Name    string
-	Args    []Value
+func ValidName(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	for i, c := range name {
+		if !unicode.IsLetter(c) {
+			if i == 0 {
+				return false
+			}
+			if !unicode.IsDigit(c) && c != '-' && c != '.' && c != '_' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
-func NewOperation(op int16) Operation {
-	operation := Operation{}
-	operation.Command = op
-	return operation
-}
-
-func (op *Operation) Print() {
-	fmt.Printf("%s", GetName(op.Command))
-	if op.Name != "" {
-		fmt.Printf(" %s", op.Name)
+func tokenIdentify(token string) int16 {
+	_, ok := GetCommand(token)
+	if ok {
+		return COMMAND
 	}
-	if len(op.Args) > 0 {
-		fmt.Printf(" ")
-		ValuesPrint(op.Args)
+	if ValidName(token) {
+		return NAME
 	}
-}
-
-func (op *Operation) ToString() string {
-	ret := fmt.Sprintf("%s", GetName(op.Command))
-	if op.Name != "" {
-		ret += fmt.Sprintf(" %s", op.Name)
+	_, err := strconv.ParseInt(token, 10, 16)
+	if err != nil {
+		return INVALID
 	}
-	if len(op.Args) > 0 {
-		ret += " "
-		ret += ValuesToString(op.Args)
-	}
-	return ret
-}
-
-func (op *Operation) Equal(op2 Operation) bool {
-	return reflect.DeepEqual(*op, op2)
+	return NUMBER
 }

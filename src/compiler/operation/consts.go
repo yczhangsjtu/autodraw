@@ -53,6 +53,22 @@ const (
 	STATE
 )
 
+// Consts for parsers
+const (
+	INVALID int16 = iota
+	COMMAND
+	NAME
+	NUMBER
+)
+
+const (
+	NEED_COMMAND int16 = iota
+	NEED_NAME
+	NEED_VALUE
+	FINISH
+	ERROR
+)
+
 var operationNames = []string{
 	"undefined", "line", "rect", "oval", "polygon", "set", "use",
 	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
