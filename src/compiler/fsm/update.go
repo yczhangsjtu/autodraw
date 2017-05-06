@@ -78,25 +78,22 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 	case operation.OVAL:
 		fallthrough
 	case operation.POLYGON:
-		values, err := fsm.LookupValues(oper.Args)
+		values, err := fsm.LookupIntegerValues(oper.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "invalid drawing arguments: "+err.Error())
 		}
-		hasTmpTransform := fsm.tmptransform != nil
-		if hasTmpTransform {
-			fsm.tfstack.PushTransform(fsm.tmptransform)
-			fsm.tmptransform = nil
+		oper.Args = values
+		inst, err := instruction.OperationToInstruction(oper)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "error in getting instruction from operation: "+err.Error())
 		}
-		values, err = fsm.ApplyTransform(values, oper.Command)
-		if hasTmpTransform {
-			fsm.tfstack.PopTransform()
-		}
+		inst.Args, err = fsm.ApplyTmpTransform(inst.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "error in applying transform: "+err.Error())
 		}
-		inst, err := instruction.GetInstruction(oper.Command, values)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "error in generating instruction: "+err.Error())

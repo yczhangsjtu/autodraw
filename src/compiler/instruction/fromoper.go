@@ -19,5 +19,47 @@ import (
 )
 
 func OperationToInstruction(oper operation.Operation) (*Instruction,error) {
-	return nil,nil
+	var args []int16
+	switch oper.Command {
+		case operation.LINE:
+		  args,ok := operation.ValuesToInt(oper.Args)
+			if !ok {
+				return nil,NewInstructionError("Operation argument not integer")
+			}
+			return GetInstance(LINE_STRIP,args)
+		case operation.RECT:
+			args = make([]int16,10)
+			args[0],args[1] = oper.Args[0].Number,oper.Args[1].Number
+			args[2],args[3] = oper.Args[0].Number,oper.Args[3].Number
+			args[4],args[5] = oper.Args[2].Number,oper.Args[3].Number
+			args[6],args[7] = oper.Args[2].Number,oper.Args[1].Number
+			args[8],args[9] = oper.Args[0].Number,oper.Args[1].Number
+			return GetInstance(LINE_STRIP,args)
+		case operation.OVAL:
+			args = make([]int16,26)
+			x,y,a,b := oper.Args[0].Number,oper.Args[1].Number,oper.Args[2].Number,oper.Args[3].Number
+			x0,y0,x1,y1,x2,y2,x3,y3 := x+a,y+b,x-a,y+b,x-a,y-b,x+a,y-b
+			args[0], args[1]  = x+a,y
+			args[2], args[3]  = int16(float64(x0)*0.55+float64(args[0])*0.45), int16(float64(y0)*0.55+float64(args[1])*0.45)
+			args[4], args[5]  = int16(float64(x0)*0.55+float64(args[6])*0.45), int16(float64(y0)*0.55+float64(args[7])*0.45)
+			args[6], args[7]  = x,y+b
+			args[8], args[9]  = int16(float64(x1)*0.55+float64(args[6])*0.45), int16(float64(y1)*0.55+float64(args[6])*0.45)
+			args[10],args[11] = int16(float64(x1)*0.55+float64(args[12])*0.45),int16(float64(y1)*0.55+float64(args[12])*0.45)
+			args[12],args[13] = x-a,y
+			args[14],args[15] = int16(float64(x2)*0.55+float64(args[12])*0.45),int16(float64(y2)*0.55+float64(args[12])*0.45)
+			args[16],args[17] = int16(float64(x2)*0.55+float64(args[18])*0.45),int16(float64(y2)*0.55+float64(args[18])*0.45)
+			args[18],args[19] = x,y-b
+			args[20],args[21] = int16(float64(x3)*0.55+float64(args[18])*0.45),int16(float64(y3)*0.55+float64(args[18])*0.45)
+			args[22],args[23] = int16(float64(x3)*0.55+float64(args[24])*0.45),int16(float64(y3)*0.55+float64(args[24])*0.45)
+			args[24],args[25] = x+a,y
+			return GetInstance(CURVE,args)
+		case operation.POLYGON:
+			args,ok := operation.ValuesToInt(oper.Args)
+			if !ok {
+				return nil,NewInstructionError("Operation argument not integer")
+			}
+			args = append(args,args[0],args[1])
+			return GetInstance(LINE_STRIP,args)
+	}
+	return nil,NewInstructionError("Invalid command "+operation.GetName(oper.Command))
 }

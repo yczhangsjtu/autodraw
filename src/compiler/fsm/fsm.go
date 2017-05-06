@@ -32,7 +32,7 @@ type FSM struct {
 	tfstack  *transformer.TFStack
 	vartable *VarTable
 	opertable *OperationTable
-	instlist []instruction.Instruction
+	instlist []*instruction.Instruction
 
 	tmptransform *transformer.Transform
 	current string
@@ -88,89 +88,59 @@ func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
 	return result, nil
 }
 
+// FSM.LookupIntegerValues takes an array of values which may contain
+// unresolved variables and force them into an array of values of type
+// INTEGER. Appearance of other types like TRANSFORMER will cause an error
+func (fsm *FSM) LookupIntegerValues(args []operation.Value) ([]operation.Value, error) {
+	result := make([]operation.Value, len(args))
+	for i, v := range args {
+		if v.Type == operation.VARIABLE {
+			value, ok := fsm.Lookup(v.Name)
+			if !ok {
+				return result, NewVartableError("failed to lookup " + v.Name)
+			}
+			if value.Type != operation.INTEGER {
+				return result, NewVartableError(v.Name + " is not integer")
+			}
+			result[i] = value
+		} else if v.Type == operation.INTEGER {
+			result[i] = v
+		} else {
+			return result, NewVartableError("invalid value type")
+		}
+	}
+	return result, nil
+}
+
 // FSM.ApplyTransform apply the current transformation matrix to the
-// coordinates list. The behavior is different for different drawing types.
-//
-// For LINE, POLYGON, take each pair of integers as (x,y) coordinates
-// and apply the transformation.
-//
-// For RECT and OVAL, some kind of expansion has to be applied to the arguments
-// so that the number of arguments is enough to represent the graph after
-// transformation.
-//
-// For RECT, finally there will be 4 points stored, i.e. the four vertices
-//
-// For OVAL, finally 8 points are stored in instruction, which is enough to
-// construct an oval after affine transformation using bezier curve
-// TODO: in fact, four points are enough for oval
-func (fsm *FSM) ApplyTransform(coords []int16, command int16) ([]int16, error) {
+// coordinates list.
+func (fsm *FSM) ApplyTransform(coords []int16) ([]int16, error) {
 	result := make([]int16, len(coords))
 	copy(result, coords)
-	switch command {
-	case operation.RECT:
-		if len(coords) != 4 {
-			return result, NewArgError(
-				"invalid number of coordinates: " + strconv.Itoa(len(coords)))
-		}
-		result = make([]int16, 8)
-		x1, y1, x2, y2 := float64(coords[0]), float64(coords[1]),
-											float64(coords[2]), float64(coords[3])
-		fx,fy := fsm.tfstack.GetTransform().Apply(float64(x1), float64(y1))
-		result[0], result[1] = int16(fx), int16(fy)
-		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x1), float64(y2))
-		result[2], result[3] = int16(fx), int16(fy)
-		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x2), float64(y2))
-		result[4], result[5] = int16(fx), int16(fy)
-		fx,fy = fsm.tfstack.GetTransform().Apply(float64(x2), float64(y1))
-		result[6], result[7] = int16(fx), int16(fy)
-		return result,nil
-	case operation.LINE:
-		fallthrough
-	case operation.POLYGON:
-		if len(coords) == 0 || len(coords)%2 == 1 {
-			return result, NewArgError(
-				"invalid number of coordinates: " + strconv.Itoa(len(coords)))
-		}
-		for i := 0; i < len(coords)/2; i++ {
-			ix, iy := 2*i, 2*i+1
-			x, y := coords[ix], coords[iy]
-			fx, fy := fsm.tfstack.GetTransform().Apply(float64(x), float64(y))
-			result[ix], result[iy] = int16(fx), int16(fy)
-		}
-		return result, nil
-	case operation.OVAL:
-		x, y, a, b := float64(coords[0]), float64(coords[1]),
-									float64(coords[2]), float64(coords[3])
-		result = make([]int16,16)
-		tx, ty := x+a, y
-		fx, fy := fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[0], result[1] = int16(fx), int16(fy)
-		tx, ty = x+a, y+b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[2], result[3] = int16(fx), int16(fy)
-		tx, ty = x, y+b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[4], result[5] = int16(fx), int16(fy)
-		tx, ty = x-a, y+b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[6], result[7] = int16(fx), int16(fy)
-		tx, ty = x-a, y
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[8], result[9] = int16(fx), int16(fy)
-		tx, ty = x-a, y-b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[10], result[11] = int16(fx), int16(fy)
-		tx, ty = x, y-b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[12], result[13] = int16(fx), int16(fy)
-		tx, ty = x+a, y-b
-		fx, fy = fsm.tfstack.GetTransform().Apply(tx,ty)
-		result[14], result[15] = int16(fx), int16(fy)
-		return result, nil
-	default:
+	if len(coords) == 0 || len(coords)%2 == 1 {
 		return result, NewArgError(
-			"invalid draw command: " + operation.GetName(command))
+			"invalid number of coordinates: " + strconv.Itoa(len(coords)))
 	}
+	for i := 0; i < len(coords)/2; i++ {
+		ix, iy := 2*i, 2*i+1
+		x, y := coords[ix], coords[iy]
+		fx, fy := fsm.tfstack.GetTransform().Apply(float64(x), float64(y))
+		result[ix], result[iy] = int16(fx), int16(fy)
+	}
+	return result, nil
+}
+
+func (fsm *FSM) ApplyTmpTransform(coords []int16) ([]int16, error) {
+	hasTmpTransform := fsm.tmptransform != nil
+	if hasTmpTransform {
+		fsm.tfstack.PushTransform(fsm.tmptransform)
+		fsm.tmptransform = nil
+	}
+	values, err := fsm.ApplyTransform(coords)
+	if hasTmpTransform {
+		fsm.tfstack.PopTransform()
+	}
+	return values,err
 }
 
 func (fsm *FSM) PushTransform(tf *transformer.Transform) {
