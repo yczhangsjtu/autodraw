@@ -15,11 +15,10 @@
 package instruction
 
 import (
-	"strconv"
-	"compiler/operation"
+	"fmt"
 )
 
-func InstructionsToBytes(insts []Instruction) []byte {
+func InstructionsToBytes(insts []*Instruction) []byte {
 	ret := []byte{}
 	for _, inst := range insts {
 		ret = append(ret, inst.ToBytes()...)
@@ -27,37 +26,33 @@ func InstructionsToBytes(insts []Instruction) []byte {
 	return ret
 }
 
-func BytesToInstructions(data []byte) ([]Instruction,error) {
+func BytesToInstructions(data []byte) ([]*Instruction,error) {
 	ptr := 0
-	ret := []Instruction{}
+	ret := []*Instruction{}
 	for {
 		if ptr*2+1 >= len(data) {
 			return ret,nil
 		}
 
 		command,err := getInt16(data,&ptr)
-		commandType := operation.GetType(command)
-		if commandType != operation.DRAW_FIXED &&
-			commandType != operation.DRAW_UNDETERMINED {
-			return ret,NewInstructionError(
-				"Invalid command number "+strconv.Itoa(int(command)))
+		if err != nil {
+			return ret,NewInstructionError("error in getting command: "+err.Error())
 		}
-
-		var argNum int16
-		if commandType == operation.DRAW_FIXED {
-			argNum = int16(operation.FinalArgNum(command))
-		} else {
-			argNum,err = getInt16(data,&ptr)
-			if err != nil {
-				return ret,err
-			}
+		argNum,err := getInt16(data,&ptr)
+		if err != nil {
+			return ret,NewInstructionError("error in getting arg number: "+err.Error())
 		}
-
+		if !ExpectArgNum(command,int(argNum)) {
+			return ret,NewInstructionError(fmt.Sprintf("wrong number of arguments for %s: %d",GetName(command),argNum))
+		}
+		if(ptr + int(argNum) >= len(data)) {
+			return ret,NewInstructionError(fmt.Sprintf("insufficient data at %d",ptr))
+		}
 		args,err := getInts16(data,&ptr,int(argNum))
 		if err != nil {
 			return ret,err
 		}
-		inst,err := GetInstruction(command,args)
+		inst,err := GetInstance(command,args)
 		if err != nil {
 			return ret,err
 		}

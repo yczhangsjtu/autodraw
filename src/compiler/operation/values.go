@@ -34,18 +34,6 @@ func NeedArgNum(op int16) bool {
 	return needArgNum[GetType(op)]
 }
 
-func NewNumberValue(x int16) Value {
-	return Value{INTEGER, "", x, nil}
-}
-
-func NewNumberValues(args ...int16) []Value {
-	ret := make([]Value, len(args))
-	for i, v := range args {
-		ret[i] = NewNumberValue(v)
-	}
-	return ret
-}
-
 func GetCommand(name string) (int16,bool) {
 	ret,ok := operationNameMap[name]
 	return ret,ok

@@ -26,6 +26,18 @@ type Value struct {
 	Transform *transformer.Transform
 }
 
+func NewNumberValue(x int16) Value {
+	return Value{INTEGER, "", x, nil}
+}
+
+func NewNumberValues(args ...int16) []Value {
+	ret := make([]Value, len(args))
+	for i, v := range args {
+		ret[i] = NewNumberValue(v)
+	}
+	return ret
+}
+
 func NewVariableValue(name string) Value {
 	if ValidName(name) {
 		return Value{VARIABLE, name, 0, nil}

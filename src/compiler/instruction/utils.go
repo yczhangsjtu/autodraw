@@ -27,6 +27,16 @@ func getInt16(data []byte, i *int) (int16,error) {
 	return ret,nil
 }
 
+func setUint16(data []byte, i *int, v uint16) error {
+	if (*i)*2+1 >= len(data) {
+		return NewInstructionError("index out of range")
+	}
+	data[(*i)*2]   = byte(v/256)
+	data[(*i)*2+1] = byte(v%256)
+	(*i)++
+	return nil
+}
+
 func getInts16(data []byte, ptr *int, count int) ([]int16,error) {
 	ret := make([]int16,count)
 	var err error

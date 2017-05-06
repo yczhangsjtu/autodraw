@@ -14,9 +14,20 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package instruction
 
-import (
-	"testing"
-)
+func GetName(cmd int16) string {
+	if int(cmd) >= len(instructionNames) {
+		return "undefined"
+	}
+	return instructionNames[cmd]
+}
 
-func TestGetInstance(t *testing.T) {
+func GetCommand(name string) (int16,bool) {
+	ret,ok := instructionNameMap[name]
+	return ret,ok
+}
+
+func ExpectArgNum(cmd int16, num int) bool {
+	return (cmd == LINE_STRIP && num%2==0 && num/2 > 1) ||
+				 (cmd == CURVE && num%2==0 && num/2 > 1 && ((num/2)%3)==1) ||
+				 (cmd == TEXT && num > 3)
 }

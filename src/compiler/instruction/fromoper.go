@@ -15,8 +15,9 @@
 package instruction
 
 import (
-	"testing"
+	"compiler/operation"
 )
 
-func TestGetInstance(t *testing.T) {
+func OperationToInstruction(oper operation.Operation) (*Instruction,error) {
+	return nil,nil
 }

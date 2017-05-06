@@ -15,7 +15,16 @@
 package instruction
 
 const (
-	LINE_STRIP int16 = iota
+	UNDEFINED int16 = iota
+	LINE_STRIP
 	CURVE
-	CYCLE
+	TEXT
 )
+
+var instructionNames = []string {
+	"undefined","linestrip","curve","text",
+}
+
+var instructionNameMap = map[string]int16 {
+	"undefined":UNDEFINED, "linestrip":LINE_STRIP, "curve":CURVE, "text":TEXT,
+}
