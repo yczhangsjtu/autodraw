@@ -20,18 +20,14 @@ generated instructions can be dumped to byte string.
 */
 package fsm
 
-import "fmt"
-import "math"
-import "strconv"
-import "compiler/instruction"
-import "compiler/operation"
-import "compiler/transformer"
+import (
+	"strconv"
+	"compiler/instruction"
+	"compiler/operation"
+	"compiler/transformer"
+)
 
-type VarTable map[string] operation.Value
-type OperationTable map[string] []operation.Operation
 
-///////////////////////////////////////////////////////////////////////////////
-// Definition of the FSM class ////////////////////////////////////////////////
 type FSM struct {
 	tfstack  *transformer.TFStack
 	vartable *VarTable
@@ -44,68 +40,6 @@ type FSM struct {
 
 	Verbose bool
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Following are error classes used in this package ///////////////////////////
-type FSMError struct {
-	oper   string
-	reason string
-}
-
-type VartableError struct {
-	reason string
-}
-
-type ArgError struct {
-	reason string
-}
-
-func NewVartableError(reason string) *VartableError {
-	e := VartableError{reason}
-	return &e
-}
-
-func NewArgError(reason string) *ArgError {
-	e := ArgError{reason}
-	return &e
-}
-
-func NewFSMError(oper string, reason string) *FSMError {
-	e := FSMError{oper, reason}
-	return &e
-}
-
-func (e *FSMError) Error() string {
-	return "FSM error: " + e.oper + ": " + e.reason
-}
-
-func (e *VartableError) Error() string {
-	return "Vartable error: " + e.reason
-}
-
-func (e *ArgError) Error() string {
-	return "Argument error: " + e.reason
-}
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Initialization functions ///////////////////////////////////////////////////
-
-// NewVarTable generates an empty variable lookup table
-func NewVarTable() *VarTable {
-	return &VarTable{}
-}
-
-func NewOperationList() []operation.Operation{
-	return []operation.Operation{}
-}
-
-func NewOperationTable() *OperationTable{
-	return &OperationTable{}
-}
 
 // NewFSM generates an empty Finite State Machine and initializes the
 // components
@@ -116,224 +50,11 @@ func NewFSM() *FSM {
 	fsm.opertable = NewOperationTable()
 	return fsm
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Methods for VarTable class /////////////////////////////////////////////////
-
-// VarTable.Assign maps a string to a value. If the value is also a variable,
-// lookup the variable name and map the string to the result found.
-// If failed to find the variable, return an error.
-// 
-// If carried out successfully, the string will point to a value of type
-// INTEGER or TRANSFORMER in this table.
-func (vartable *VarTable) Assign(name string, v operation.Value) error {
-	if v.Type == operation.VARIABLE {
-		value, ok := (*vartable)[v.Name]
-		if !ok {
-			return NewVartableError("Undefined variable: " + v.Name)
-		}
-		(*vartable)[name] = value
-		return nil
-	} else if v.Type == operation.INTEGER || v.Type == operation.TRANSFORMER {
-		(*vartable)[name] = v
-		return nil
-	}
-	return NewVartableError("Invalid value: " + v.ToString())
-}
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Methods for FSM class //////////////////////////////////////////////////////
 func (fsm *FSM) appendOperation(oper operation.Operation) {
 	(*fsm.opertable)[fsm.current] = append((*fsm.opertable)[fsm.current],oper)
-}
-
-/* Update is the most crucial method of FSM: takes an operation and update its
-own state.
-
-For simple drawing operations like LINE, RECT, POLYGON, the FSM
-maps the coordinates using the current transformation matrix in the stack
-and generate an instruction.
-
-For operations like SET, TRANSFORM the FSM modifies its variable lookup
-table.
-
-For operations like USE, PUSH and POP the FSM modifies its matrix stack.
-*/
-func (fsm *FSM) Update(oper operation.Operation) error {
-	// If there has been a BEGIN not yet ENDed, i.e. in a subfigure, just try to
-	// log the operation into the corresponding operation list of the figure name
-	if fsm.current != "" {
-		switch oper.Command {
-		// One more level of begin, doesn't have to evaluate it (that's the job of
-		// the subfigure), but have to count the number of BEGINs to know which END
-		// is the final END
-		case operation.BEGIN:
-			fsm.beginLevel++
-			fsm.appendOperation(oper)
-			return nil
-		// Decrease a level of begin, of there is more than one level
-		// If only one level, end the subfigure
-		case operation.END:
-			fsm.beginLevel--
-			if fsm.beginLevel > 0 {
-				fsm.appendOperation(oper)
-			} else if fsm.beginLevel == 0 {
-				fsm.current = ""
-				return nil
-			} else {
-				return NewFSMError(oper.ToString(),"too many end operation")
-			}
-		// Ordinary operations, simply append
-		default:
-			fsm.appendOperation(oper)
-			return nil
-		}
-	}
-	switch oper.Command {
-	case operation.UNDEFINED:
-		return NewFSMError(oper.ToString(), "undefined operation")
-	case operation.LINE:
-		fallthrough
-	case operation.RECT:
-		fallthrough
-	case operation.OVAL:
-		fallthrough
-	case operation.POLYGON:
-		values, err := fsm.LookupValues(oper.Args)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "invalid drawing arguments: "+err.Error())
-		}
-		hasTmpTransform := fsm.tmptransform != nil
-		if hasTmpTransform {
-			fsm.tfstack.PushTransform(fsm.tmptransform)
-			fsm.tmptransform = nil
-		}
-		values, err = fsm.ApplyTransform(values, oper.Command)
-		if hasTmpTransform {
-			fsm.tfstack.PopTransform()
-		}
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "error in applying transform: "+err.Error())
-		}
-		inst, err := instruction.GetInstruction(oper.Command, values)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "error in generating instruction: "+err.Error())
-		}
-		if fsm.Verbose {
-			fmt.Println(inst.ToString())
-		}
-		fsm.instlist = append(fsm.instlist, inst)
-	case operation.SET:
-		err := fsm.vartable.Assign(oper.Name, oper.Args[0])
-		if err != nil {
-			return NewFSMError(oper.ToString(), err.Error())
-		}
-	case operation.USE:
-		value, ok := fsm.Lookup(oper.Name)
-		if !ok {
-			return NewFSMError(
-				oper.ToString(), "failed to lookup transform "+oper.Name)
-		}
-		if value.Type != operation.TRANSFORMER {
-			return NewFSMError(oper.ToString(), oper.Name+" is not transform")
-		}
-		fsm.tmptransform = value.Transform
-	case operation.PUSH:
-		value, ok := fsm.Lookup(oper.Name)
-		if !ok {
-			return NewFSMError(
-				oper.ToString(), "failed to lookup transform "+oper.Name)
-		}
-		if value.Type != operation.TRANSFORMER {
-			return NewFSMError(oper.ToString(), oper.Name+" is not transform")
-		}
-		fsm.tfstack.PushTransform(value.Transform)
-	case operation.POP:
-		ok := fsm.tfstack.PopTransform()
-		if !ok {
-			return NewFSMError(oper.ToString(), "stack already empty")
-		}
-	case operation.TRANSFORM:
-		tfvalues, err := fsm.LookupValues(oper.Args)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "invalid rotate arguments: "+err.Error())
-		}
-		fsm.vartable.Assign(
-			oper.Name, operation.NewTransformValue(ArgsToTransform(tfvalues)))
-	case operation.ROTATE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "invalid transform arguments: "+err.Error())
-		}
-		fsm.vartable.Assign(
-			oper.Name, operation.NewTransformValue(ArgToRotate(tfvalues[0])))
-	case operation.SCALE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "invalid scale arguments: "+err.Error())
-		}
-		fsm.vartable.Assign(
-			oper.Name, operation.NewTransformValue(ArgsToScale(tfvalues)))
-	case operation.TRANSLATE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
-		if err != nil {
-			return NewFSMError(
-				oper.ToString(), "invalid scale arguments: "+err.Error())
-		}
-		fsm.vartable.Assign(
-			oper.Name, operation.NewTransformValue(ArgsToTranslate(tfvalues)))
-	case operation.DRAW:
-		operlist,ok := (*fsm.opertable)[oper.Name]
-		if !ok {
-			return NewFSMError(
-				oper.ToString(), "figure does not exist: "+oper.Name)
-		}
-		subfsm := NewFSM()
-		subfsm.opertable = fsm.opertable
-		hasTmpTransform := fsm.tmptransform != nil
-		if hasTmpTransform {
-			fsm.tfstack.PushTransform(fsm.tmptransform)
-			fsm.tmptransform = nil
-		}
-		subfsm.PushTransform(fsm.tfstack.GetTransform())
-		if hasTmpTransform {
-			fsm.tfstack.PopTransform()
-		}
-		for _,suboper := range operlist {
-			if fsm.Verbose {
-				fmt.Printf("Subfigure %s: %s\n",oper.Name,suboper.ToString())
-			}
-			err := subfsm.Update(suboper)
-			if err != nil {
-				return NewFSMError(
-					oper.ToString(),"error in figure "+oper.Name+":\n\t"+err.Error())
-			}
-		}
-		fsm.instlist = append(fsm.instlist,subfsm.instlist...)
-	case operation.IMPORT:
-	case operation.BEGIN:
-		_,ok := (*fsm.opertable)[oper.Name]
-		if ok {
-			return NewFSMError(
-				oper.ToString(), "figure already exists: "+oper.Name)
-		}
-		(*fsm.opertable)[oper.Name] = NewOperationList()
-		fsm.current = oper.Name
-		fsm.beginLevel++
-	case operation.END:
-		return NewFSMError(oper.ToString(),"unexpected end of figure")
-	}
-	return nil
 }
 
 // FSM.Lookup is a wrapper around the lookup function of its variable table.
@@ -470,38 +191,3 @@ func (fsm *FSM) Assign(name string, v operation.Value) error {
 func (fsm *FSM) DumpInstructions() []byte {
 	return instruction.InstructionsToBytes(fsm.instlist)
 }
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Other utility functions ////////////////////////////////////////////////////
-
-// ArgsToTransform given an array of six integers returns a transformer
-// The transformer is a matrix of type float64, so to represent a transformer
-// with some accuracy, use 1 in integer to represent 0.01 in float
-func ArgsToTransform(args []int16) *transformer.Transform {
-	return transformer.NewTransform(
-		float64(args[0])/100.0, float64(args[1])/100.0, float64(args[2]),
-		float64(args[3])/100.0, float64(args[4])/100.0, float64(args[5]),
-	)
-}
-
-func ArgToRotate(arg int16) *transformer.Transform {
-	return transformer.RotateTransform(
-		float64(arg)/180.0*math.Pi,
-	)
-}
-
-func ArgsToScale(args []int16) *transformer.Transform {
-	return transformer.ScaleTransform(
-		float64(args[0])/100.0, float64(args[1])/100.0,
-	)
-}
-
-func ArgsToTranslate(args []int16) *transformer.Transform {
-	return transformer.TranslateTransform(
-		float64(args[0]), float64(args[1]),
-	)
-}
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////

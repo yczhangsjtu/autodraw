@@ -14,8 +14,10 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package transformer
 
-import "fmt"
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 var Tolerance float64 = 1e-10
 
