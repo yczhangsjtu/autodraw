@@ -83,7 +83,6 @@ func main() {
 	lineno := 1
 	compiler := fsm.NewFSM()
 	compiler.Verbose = verbose
-	parser := operation.NewLineParser()
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -91,7 +90,7 @@ func main() {
 		if line == "" {
 			continue
 		}
-		oper, err := parser.ParseLine(line)
+		oper, err := operation.ParseLine(line)
 		if err != nil {
 			log.Fatal(err)
 		}

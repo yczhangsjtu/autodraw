@@ -160,7 +160,8 @@ func (parser *LineParser) Digest() (Operation, error) {
 	}
 }
 
-func (parser *LineParser) ParseLine(line string) (Operation, error) {
+func ParseLine(line string) (Operation, error) {
+	parser := NewLineParser()
 	parser.line = line
 	line = strings.Trim(line, " ")
 	tokens := strings.Split(line, " ")

@@ -33,8 +33,7 @@ func TestOperationToInstruction(t *testing.T) {
 		{CURVE,[]int16{210,110,210,137,165,160,110,160,55,160,10,137,10,110,10,82,55,60,110,60,165,60,210,82,210,110}},
 	}
 	for i := 0; i < len(tests); i++ {
-		parser := operation.NewLineParser()
-		oper,err := parser.ParseLine(tests[i])
+		oper,err := operation.ParseLine(tests[i])
 		if err != nil {
 			t.Errorf("Failed to parse: %s",tests[i])
 		}

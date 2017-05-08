@@ -75,8 +75,7 @@ func TestFSMUpdate(t *testing.T) {
 		"M",
 	}
 	for _, line := range tests {
-		parser := operation.NewLineParser()
-		oper, err := parser.ParseLine(line)
+		oper, err := operation.ParseLine(line)
 		if err != nil {
 			t.Errorf(err.Error())
 		}

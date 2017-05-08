@@ -26,10 +26,6 @@ func ExpectArgs(op int16) bool {
 	return expectArgs[GetType(op)]
 }
 
-func FinalArgNum(op int16) int {
-	return finalArgNum[op]
-}
-
 func NeedArgNum(op int16) bool {
 	return needArgNum[GetType(op)]
 }
@@ -51,8 +47,4 @@ func GetType(op int16) int16 {
 		return UNDEFINED
 	}
 	return operationTypes[op]
-}
-
-func GetOperationNum() int {
-	return len(operationTypes)
 }

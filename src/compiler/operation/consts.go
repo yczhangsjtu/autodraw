@@ -99,12 +99,6 @@ var needArgNum = []bool{
 	false, false, true, false, false, false,
 }
 
-var finalArgNum = []int{
-	0, 4, 8,16, 0, 1, 0,
-	0, 0, 6, 1, 2, 2, 0, 0,
-	0, 0,
-}
-
 var operationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT,
 	"oval": OVAL, "polygon": POLYGON, "set": SET, "use": USE, "push": PUSH,
