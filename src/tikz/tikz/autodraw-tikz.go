@@ -14,16 +14,17 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package tikz
 
-import "fmt"
-import "compiler/operation"
-import "compiler/instruction"
+import (
+	"fmt"
+	"compiler/instruction"
+)
 
 type Tikz struct {
 	scale float64
 	offsetx int16
 	offsety int16
 
-	instlist []instruction.Instruction
+	instlist []*instruction.Instruction
 }
 
 type TikzError struct {
@@ -44,7 +45,7 @@ func NewTikz() *Tikz{
 	return tz
 }
 
-func (tz *Tikz) Update(inst instruction.Instruction) error {
+func (tz *Tikz) Update(inst *instruction.Instruction) error {
 	tz.instlist = append(tz.instlist,inst)
 	return nil
 }
@@ -65,23 +66,28 @@ func (tz *Tikz) GenerateTikzCode() (string,error) {
 		options,code),nil
 }
 
-func InstToTikz(inst instruction.Instruction, scale float64) (string,error) {
+func InstToTikz(inst *instruction.Instruction, scale float64) (string,error) {
 	switch inst.Command {
-	case operation.LINE:
-		return fmt.Sprintf("\\draw %s;",GenerateFloatPairs("--",
-					IntsToScaledFloats(inst.Args,scale))),nil
-	case operation.RECT:
-		return fmt.Sprintf("\\draw %s -- cycle;",GenerateFloatPairs("--",
-				IntsToScaledFloats(inst.Args,scale))),nil
-	case operation.POLYGON:
-		return fmt.Sprintf("\\draw %s -- cycle;",GenerateFloatPairs("--",
-				IntsToScaledFloats(inst.Args[1:],scale))),nil
-	case operation.OVAL:
-		return fmt.Sprintf("\\draw %s;",GenerateFloatPairsCurve(
-				IntsToScaledFloats(inst.Args,scale))),nil
+	case instruction.LINE_STRIP:
+		return fmt.Sprintf("\\draw %s;",
+		  GenerateFloatPairs(IntsToScaledFloats(inst.Args,scale))),nil
+	case instruction.CURVE:
+		return fmt.Sprintf("\\draw %s;",
+		  GenerateFloatPairsCurve(IntsToScaledFloats(inst.Args,scale))),nil
+	case instruction.TEXT:
+		return fmt.Sprintf("\\node[scale=%g] at (%d,%d) {%s};",
+		  scale*float64(inst.Args[2])/256.0,inst.Args[0],inst.Args[1],GenerateString(inst.Args[3:])),nil
 	default:
 		return "",NewTikzError("invalid instruction: "+inst.ToString())
 	}
+}
+
+func GenerateString(args []int16) string {
+	ret := make([]byte,len(args))
+	for i,c := range args {
+		ret[i] = byte(c)
+	}
+	return string(ret)
 }
 
 func IntsToFloats(args []int16) []float64 {
@@ -100,40 +106,33 @@ func IntsToScaledFloats(args []int16, scale float64) []float64 {
 	return ret
 }
 
-func GenerateFloatPairs(connect string, args []float64) string {
-	if len(args) == 0 {
+func GenerateFloatPairs(args []float64) string {
+	if len(args) == 0 || len(args)%2 == 1{
 		return ""
 	}
+	connect := "--"
 	num := len(args)/2
 	ret := fmt.Sprintf("(%g,%g)",args[0],args[1])
 	for i := 1; i < num; i++ {
 		ret += fmt.Sprintf(fmt.Sprintf(" %s %s",connect,"(%g,%g)"),
 			args[2*i],args[2*i+1])
 	}
-	if len(args)%2 == 1 {
-		ret += fmt.Sprintf(fmt.Sprintf(" %s %s",connect,"(%g)"),args[len(args)-1])
-	}
 	return ret
 }
 
 func GenerateFloatPairsCurve(args []float64) string {
-	if len(args) < 2 {
-		return ""
-	}
-	if len(args)%4 != 0 {
+	if len(args) < 8 || len(args)%6 != 2{
 		return ""
 	}
 	args = append(args,args[0],args[1])
-	num := len(args)/4
+	num := (len(args)/2-1)/3+1
 	ret := fmt.Sprintf("(%g,%g)",args[0],args[1])
-	for i := 0; i < num; i++ {
-		x0,y0 := args[i*4],args[i*4+1]
-		x1,y1 := args[i*4+2],args[i*4+3]
-		x2,y2 := args[i*4+4],args[i*4+5]
-		bx1,by1 := x0*0.45+x1*0.55,y0*0.45+y1*0.55
-		bx2,by2 := x2*0.45+x1*0.55,y2*0.45+y1*0.55
+	for i := 0; i < num-1; i++ {
+		x0,y0 := args[i*6+2],args[i*6+3]
+		x1,y1 := args[i*6+4],args[i*6+5]
+		x2,y2 := args[i*6+6],args[i*6+7]
 		ret += fmt.Sprintf(" .. controls (%g,%g) and (%g,%g) .. (%g,%g)",
-			bx1,by1,bx2,by2,x2,y2)
+			x0,y0,x1,y1,x2,y2)
 	}
 	return ret
 }
