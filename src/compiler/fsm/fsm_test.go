@@ -31,6 +31,7 @@ func TestFSMUpdate(t *testing.T) {
 		"set Carror -10",
 		"set Bob Carror",
 		"set Carror Alice",
+		"set Hello \"Hello world!\"",
 		"transform T Alice 0 Bob 0 110 Carror",
 		"rotate X Alice",
 		"scale Y Bob Carror",
@@ -68,6 +69,9 @@ func TestFSMUpdate(t *testing.T) {
 	results := map[string]int16{
 		"Alice": 110, "Bob": -10, "Carror": 110,
 	}
+	stringvars := map[string]string{
+		"Hello": "Hello world!",
+	}
 	transforms := []string{
 		"T", "P", "Q", "U", "V", "W", "X", "Y", "Z",
 	}
@@ -91,6 +95,18 @@ func TestFSMUpdate(t *testing.T) {
 		}
 		if value.Number != v {
 			t.Errorf("Expect %s = %d, got %d", k, v, value.Number)
+		}
+	}
+	for k, v := range stringvars {
+		value, ok := fsm.Lookup(k)
+		if !ok {
+			t.Errorf("%s not found",k)
+		}
+		if value.Type != operation.STRING {
+			t.Errorf("Wrong type for value %s",k)
+		}
+		if value.Text != v {
+			t.Errorf("Expect %s = %s, got %s",k,v,value.Text)
 		}
 	}
 	for _, v := range unexpect {

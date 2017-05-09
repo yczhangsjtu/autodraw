@@ -60,6 +60,13 @@ func OperationToInstruction(oper operation.Operation) (*Instruction,error) {
 			}
 			args = append(args,args[0],args[1])
 			return GetInstance(LINE_STRIP,args)
+		case operation.TEXT:
+			args = make([]int16,3)
+			args[0],args[1],args[2] = oper.Args[0].Number,oper.Args[1].Number,oper.Args[2].Number
+			for _,c := range oper.Args[3].Text {
+				args = append(args,int16(c))
+			}
+			return GetInstance(TEXT,args)
 	}
 	return nil,NewInstructionError("Invalid command "+operation.GetName(oper.Command))
 }

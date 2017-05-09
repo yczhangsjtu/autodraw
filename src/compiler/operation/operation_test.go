@@ -214,35 +214,23 @@ func TestToString(t *testing.T) {
 ///////////////////////////////////////////////////////////////////////////////
 // New Operations for convenience //////////////////////////////////////////////
 func newLineOperation(coords ...Value) Operation {
-	if len(coords) == int(ExpectArgNum(LINE)) {
-		return newOperationTypeDrawFixed(LINE, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+	return newOperationTypeDrawFixed(LINE, coords...)
 }
 
 func newRectOperation(coords ...Value) Operation {
-	if len(coords) == int(ExpectArgNum(RECT)) {
-		return newOperationTypeDrawFixed(RECT, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+	return newOperationTypeDrawFixed(RECT, coords...)
 }
 
 func newOvalOperation(coords ...Value) Operation {
-	if len(coords) == int(ExpectArgNum(OVAL)) {
-		return newOperationTypeDrawFixed(OVAL, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+	return newOperationTypeDrawFixed(OVAL, coords...)
+}
+
+func newTextOperation(coords ...Value) Operation {
+	return newOperationTypeDrawFixed(TEXT,coords...)
 }
 
 func newPolygonOperation(coords ...Value) Operation {
-	if len(coords) >= 4 && len(coords)%2 == 0 {
-		return newOperationTypeDrawNondetermined(POLYGON, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+	return newOperationTypeDrawNondetermined(POLYGON, coords...)
 }
 
 func newSetOperation(name string, v Value) Operation {
@@ -254,11 +242,7 @@ func newRotateOperation(name string, v Value) Operation {
 }
 
 func newTransformOperation(name string, coords ...Value) Operation {
-	if len(coords) == int(ExpectArgNum(TRANSFORM)) {
-		return newOperationTypeAssign(TRANSFORM, name, coords...)
-	} else {
-		return NewOperation(UNDEFINED)
-	}
+	return newOperationTypeAssign(TRANSFORM, name, coords...)
 }
 
 func newScaleOperation(name string, coords ...Value) Operation {

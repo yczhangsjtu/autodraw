@@ -25,6 +25,7 @@ const (
 	RECT
 	OVAL
 	POLYGON
+	TEXT
 	SET
 	USE
 	PUSH
@@ -44,37 +45,12 @@ const (
 	VARIABLE int16 = iota
 	INTEGER
 	TRANSFORMER
+	STRING
 	NAN
 )
 
-// Operation types
-const (
-	NOT_OPERATION int16 = iota
-	DRAW_FIXED
-	DRAW_UNDETERMINED
-	ASSIGN
-	SINGLE
-	STATE
-)
-
-// Consts for parsers
-const (
-	INVALID int16 = iota
-	COMMAND
-	NAME
-	NUMBER
-)
-
-const (
-	NEED_COMMAND int16 = iota
-	NEED_NAME
-	NEED_VALUE
-	FINISH
-	ERROR
-)
-
 var operationNames = []string{
-	"undefined", "line", "rect", "oval", "polygon", "set", "use",
+	"undefined", "line", "rect", "oval", "polygon", "text", "set", "use",
 	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
 	"begin", "end",
 }
@@ -85,7 +61,8 @@ var operationPatterns = []string{
 	"^\\s*rect((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){4})\\s*$",
 	"^\\s*oval((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){4})\\s*$",
 	"^\\s*polygon(((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){2})+)\\s*$",
-	"^\\s*set\\s+([_A-Za-z]\\w*)\\s+(-?\\d+|[_A-Za-z]\\w*)\\s*$",
+	"^\\s*text((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){3})\\s+(\"[^\"]*\"|[_A-Za-z]\\w*)\\s*$",
+	"^\\s*set\\s+([_A-Za-z]\\w*)\\s+(-?\\d+|\"[^\"]*\"|[_A-Za-z]\\w*)\\s*$",
 	"^\\s*use\\s+([_A-Za-z]\\w*)\\s*$",
 	"^\\s*push\\s+([_A-Za-z]\\w*)\\s*$",
 	"^\\s*pop\\s*$",
@@ -108,31 +85,7 @@ var operationRegexp = []*regexp.Regexp {
 	nil,nil,nil,nil,nil,
 	nil,nil,nil,nil,nil,
 	nil,nil,nil,nil,nil,
-	nil,nil,
-}
-
-var operationTypes = []int16{
-	NOT_OPERATION, DRAW_FIXED, DRAW_FIXED, DRAW_FIXED, DRAW_UNDETERMINED,
-	ASSIGN, STATE, STATE, SINGLE, ASSIGN, ASSIGN, ASSIGN, ASSIGN, STATE, STATE,
-	STATE, SINGLE,
-}
-
-var expectName = []bool{
-	false, false, false, true, false, true,
-}
-
-var expectArgNum = []int{
-	0, 4, 4, 4, 0, 1, 0,
-	0, 0, 6, 1, 2, 2, 0, 0,
-	0, 0,
-}
-
-var expectArgs = []bool{
-	false, true, true, true, false, false,
-}
-
-var needArgNum = []bool{
-	false, false, true, false, false, false,
+	nil,nil,nil,
 }
 
 var operationNameMap = map[string]int16{

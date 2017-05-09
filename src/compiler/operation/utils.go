@@ -14,26 +14,7 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
-import (
-	"strconv"
-)
-
 func ValidName(name string) bool {
 	pattern := GetVariableRegexp()
 	return pattern.MatchString(name)
-}
-
-func tokenIdentify(token string) int16 {
-	_, ok := GetCommand(token)
-	if ok {
-		return COMMAND
-	}
-	if ValidName(token) {
-		return NAME
-	}
-	_, err := strconv.ParseInt(token, 10, 16)
-	if err != nil {
-		return INVALID
-	}
-	return NUMBER
 }

@@ -17,6 +17,7 @@ package operation
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"compiler/transformer"
 )
 
@@ -24,6 +25,7 @@ type Value struct {
 	Type      int16
 	Name      string
 	Number    int16
+	Text      string
 	Transform *transformer.Transform
 }
 
@@ -31,6 +33,10 @@ func NewValue(v string) Value {
 	number,err := strconv.ParseInt(v,10,16)
 	if err == nil {
 		return NewNumberValue(int16(number))
+	}
+	if len(v) > 1 && strings.HasPrefix(v,"\"") &&
+		strings.HasSuffix(v,"\"") {
+		return NewStringValue(v[1:len(v)-1])
 	}
 	return NewVariableValue(v)
 }
@@ -45,7 +51,7 @@ func NewValues(v ...string) []Value {
 }
 
 func NewNumberValue(x int16) Value {
-	return Value{INTEGER, "", x, nil}
+	return Value{INTEGER, "", x,"",nil}
 }
 
 func NewNumberValues(args ...int16) []Value {
@@ -56,15 +62,19 @@ func NewNumberValues(args ...int16) []Value {
 	return ret
 }
 
+func NewStringValue(s string) Value {
+	return Value{STRING,"",0,s,nil}
+}
+
 func NewVariableValue(name string) Value {
 	if ValidName(name) {
-		return Value{VARIABLE, name, 0, nil}
+		return Value{VARIABLE, name, 0,"", nil}
 	}
-	return Value{NAN, "", 0, nil}
+	return Value{NAN, "", 0,"", nil}
 }
 
 func NewTransformValue(tf *transformer.Transform) Value {
-	return Value{TRANSFORMER, "", 0, tf}
+	return Value{TRANSFORMER, "", 0,"", tf}
 }
 
 func (v *Value) Print() {
@@ -99,6 +109,8 @@ func (v *Value) ToString() string {
 		return v.Transform.ToString()
 	case VARIABLE:
 		return fmt.Sprintf("%s", v.Name)
+	case STRING:
+		return fmt.Sprintf("\"%s\"", v.Text)
 	}
 	return fmt.Sprintf("undefined")
 }

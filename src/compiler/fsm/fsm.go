@@ -61,13 +61,14 @@ func (fsm *FSM) appendOperation(oper operation.Operation) {
 func (fsm *FSM) Lookup(name string) (operation.Value, bool) {
 	value, ok := (*fsm.vartable)[name]
 	return value, ok && (value.Type == operation.INTEGER ||
+		value.Type == operation.STRING ||
 		value.Type == operation.TRANSFORMER)
 }
 
 // FSM.LookupValues takes an array of values which may contain unresolved
 // variables and force them into an array of values of type INTEGER.
 // Appearance of other types like TRANSFORMER will cause an error
-func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
+func (fsm *FSM) LookupInts(args []operation.Value) ([]int16, error) {
 	result := make([]int16, len(args))
 	for i, v := range args {
 		if v.Type == operation.VARIABLE {
@@ -83,6 +84,22 @@ func (fsm *FSM) LookupValues(args []operation.Value) ([]int16, error) {
 			result[i] = v.Number
 		} else {
 			return result, NewVartableError("invalid value type")
+		}
+	}
+	return result, nil
+}
+
+func (fsm *FSM) LookupValues(args []operation.Value) ([]operation.Value, error) {
+	result := make([]operation.Value, len(args))
+	for i, v := range args {
+		if v.Type == operation.VARIABLE {
+			value, ok := fsm.Lookup(v.Name)
+			if !ok {
+				return result, NewVartableError("failed to lookup " + v.Name)
+			}
+			result[i] = value
+		} else {
+			result[i] = v
 		}
 	}
 	return result, nil

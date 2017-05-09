@@ -30,3 +30,24 @@ func NewVarTable() *VarTable {
 	return &VarTable{}
 }
 
+// VarTable.Assign maps a string to a value. If the value is also a variable,
+// lookup the variable name and map the string to the result found.
+// If failed to find the variable, return an error.
+// 
+// If carried out successfully, the string will point to a value of type
+// INTEGER or TRANSFORMER in this table.
+func (vartable *VarTable) Assign(name string, v operation.Value) error {
+	if v.Type == operation.VARIABLE {
+		value, ok := (*vartable)[v.Name]
+		if !ok {
+			return NewVartableError("Undefined variable: " + v.Name)
+		}
+		(*vartable)[name] = value
+		return nil
+	} else if v.Type == operation.INTEGER || v.Type == operation.TRANSFORMER ||
+	    v.Type == operation.STRING {
+		(*vartable)[name] = v
+		return nil
+	}
+	return NewVartableError("Invalid value: " + v.ToString())
+}

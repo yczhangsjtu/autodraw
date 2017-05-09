@@ -94,16 +94,34 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 			return NewFSMError(
 				oper.ToString(), "error in applying transform: "+err.Error())
 		}
+		if fsm.Verbose {
+			fmt.Println(inst.ToString())
+		}
+		fsm.instlist = append(fsm.instlist, inst)
+	case operation.TEXT:
+		values,err := fsm.LookupValues(oper.Args)
 		if err != nil {
 			return NewFSMError(
-				oper.ToString(), "error in generating instruction: "+err.Error())
+				oper.ToString(), "invalid text arguments: "+err.Error())
 		}
+		oper.Args = values
+		inst, err := instruction.OperationToInstruction(oper)
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "error in getting instruction from operation: "+err.Error())
+		}
+		pos,err := fsm.ApplyTmpTransform(inst.Args[0:2])
+		if err != nil {
+			return NewFSMError(
+				oper.ToString(), "error in applying transform: "+err.Error())
+		}
+		inst.Args[0],inst.Args[1] = pos[0],pos[1]
 		if fsm.Verbose {
 			fmt.Println(inst.ToString())
 		}
 		fsm.instlist = append(fsm.instlist, inst)
 	case operation.SET:
-		err := fsm.vartable.Assign(oper.Name, oper.Args[0])
+		err := fsm.Assign(oper.Name, oper.Args[0])
 		if err != nil {
 			return NewFSMError(oper.ToString(), err.Error())
 		}
@@ -133,36 +151,36 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 			return NewFSMError(oper.ToString(), "stack already empty")
 		}
 	case operation.TRANSFORM:
-		tfvalues, err := fsm.LookupValues(oper.Args)
+		tfvalues, err := fsm.LookupInts(oper.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "invalid rotate arguments: "+err.Error())
 		}
-		fsm.vartable.Assign(
+		fsm.Assign(
 			oper.Name, operation.NewTransformValue(ArgsToTransform(tfvalues)))
 	case operation.ROTATE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
+		tfvalues, err := fsm.LookupInts(oper.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "invalid transform arguments: "+err.Error())
 		}
-		fsm.vartable.Assign(
+		fsm.Assign(
 			oper.Name, operation.NewTransformValue(ArgToRotate(tfvalues[0])))
 	case operation.SCALE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
+		tfvalues, err := fsm.LookupInts(oper.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "invalid scale arguments: "+err.Error())
 		}
-		fsm.vartable.Assign(
+		fsm.Assign(
 			oper.Name, operation.NewTransformValue(ArgsToScale(tfvalues)))
 	case operation.TRANSLATE:
-		tfvalues, err := fsm.LookupValues(oper.Args)
+		tfvalues, err := fsm.LookupInts(oper.Args)
 		if err != nil {
 			return NewFSMError(
 				oper.ToString(), "invalid scale arguments: "+err.Error())
 		}
-		fsm.vartable.Assign(
+		fsm.Assign(
 			oper.Name, operation.NewTransformValue(ArgsToTranslate(tfvalues)))
 	case operation.DRAW:
 		operlist,ok := (*fsm.opertable)[oper.Name]

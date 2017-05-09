@@ -18,22 +18,6 @@ import (
 	"regexp"
 )
 
-func ExpectName(op int16) bool {
-	return expectName[GetType(op)]
-}
-
-func ExpectArgNum(op int16) int {
-	return expectArgNum[op]
-}
-
-func ExpectArgs(op int16) bool {
-	return expectArgs[GetType(op)]
-}
-
-func NeedArgNum(op int16) bool {
-	return needArgNum[GetType(op)]
-}
-
 func GetPattern(op int16) string {
 	if int(op) >= len(operationNames) {
 		return ""
@@ -89,9 +73,3 @@ func GetName(op int16) string {
 	return operationNames[op]
 }
 
-func GetType(op int16) int16 {
-	if int(op) >= len(operationTypes) {
-		return UNDEFINED
-	}
-	return operationTypes[op]
-}
