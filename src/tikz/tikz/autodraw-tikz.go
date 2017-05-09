@@ -16,6 +16,8 @@ package tikz
 
 import (
 	"fmt"
+	"image/color"
+	"compiler/operation"
 	"compiler/instruction"
 )
 
@@ -52,18 +54,24 @@ func (tz *Tikz) Update(inst *instruction.Instruction) error {
 
 func (tz *Tikz) GenerateTikzCode() (string,error) {
 	code := ""
-	options := ""
+	defs := ""
+	defmap := make(map[string]string)
 
 	for _,inst := range tz.instlist {
 		tikzCode,err := InstToTikz(inst,tz.scale)
 		if err != nil {
 			return "",err
 		}
-		code += fmt.Sprintf("  %s\n",tikzCode)
+		if tikzCode != "" {
+			code += fmt.Sprintf("  %s\n",tikzCode)
+		}
+		def := InstToDef(inst,defmap)
+		if def != "" {
+			defs += fmt.Sprintf("  %s\n",def)
+		}
 	}
 
-	return fmt.Sprintf("\\begin{tikzpicture}%s\n%s\\end{tikzpicture}\n",
-		options,code),nil
+	return fmt.Sprintf("\\begin{tikzpicture}\n%s%s\\end{tikzpicture}\n",defs,code),nil
 }
 
 func InstToTikz(inst *instruction.Instruction, scale float64) (string,error) {
@@ -75,11 +83,50 @@ func InstToTikz(inst *instruction.Instruction, scale float64) (string,error) {
 		return fmt.Sprintf("\\draw %s;",
 		  GenerateFloatPairsCurve(IntsToScaledFloats(inst.Args,scale))),nil
 	case instruction.TEXT:
-		return fmt.Sprintf("\\node[scale=%g] at (%d,%d) {%s};",
-		  scale*float64(inst.Args[2])/256.0,inst.Args[0],inst.Args[1],GenerateString(inst.Args[3:])),nil
+		return fmt.Sprintf("\\node[scale=%g] at (%g,%g) {%s};",
+		  scale*float64(inst.Args[2])/256.0,float64(inst.Args[0])/100.0,float64(inst.Args[1])/100.0,GenerateString(inst.Args[3:])),nil
+	case instruction.NODE:
+		c := operation.GetColor(inst.Args[2])
+		colorString := GetColorString(c)
+		code := fmt.Sprintf("\\node[scale=%g,draw,fill=%s] at (%g,%g) {%s};",
+		  scale,colorString,float64(inst.Args[0])/100.0,float64(inst.Args[1])/100.0,GenerateString(inst.Args[3:]))
+		return code,nil
 	default:
 		return "",NewTikzError("invalid instruction: "+inst.ToString())
 	}
+}
+
+func InstToDef(inst *instruction.Instruction,defmap map[string]string) string {
+	switch inst.Command {
+	case instruction.NODE:
+		c := operation.GetColor(inst.Args[2])
+		colorCode := GetColorCode(c)
+		def := GetColorDef(c,colorCode,defmap)
+		return def
+	default:
+		return ""
+	}
+}
+
+func GetColorDef(c color.Color, colorString string, defmap map[string]string) string {
+	_,ok := defmap[colorString]
+	if ok {
+		return ""
+	}
+	r,g,b,_ := c.RGBA()
+	def := fmt.Sprintf("\\definecolor{%s}{RGB}{%d,%d,%d}",colorString,r>>8,g>>8,b>>8)
+	defmap[colorString] = def
+	return def
+}
+
+func GetColorCode(c color.Color) string {
+	r,g,b,_ := c.RGBA()
+	return fmt.Sprintf("r%dg%db%d",r>>8,g>>8,b>>8)
+}
+
+func GetColorString(c color.Color) string {
+	r,g,b,a := c.RGBA()
+	return fmt.Sprintf("r%dg%db%d!%d",r>>8,g>>8,b>>8,a*100/65535)
 }
 
 func GenerateString(args []int16) string {

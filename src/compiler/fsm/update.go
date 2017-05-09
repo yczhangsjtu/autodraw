@@ -99,6 +99,8 @@ func (fsm *FSM) Update(oper operation.Operation) error {
 		}
 		fsm.instlist = append(fsm.instlist, inst)
 	case operation.TEXT:
+		fallthrough
+	case operation.NODE:
 		values,err := fsm.LookupValues(oper.Args)
 		if err != nil {
 			return NewFSMError(

@@ -67,6 +67,13 @@ func OperationToInstruction(oper operation.Operation) (*Instruction,error) {
 				args = append(args,int16(c))
 			}
 			return GetInstance(TEXT,args)
+		case operation.NODE:
+			args = make([]int16,3)
+			args[0],args[1],args[2] = oper.Args[0].Number,oper.Args[1].Number,oper.Args[2].Number
+			for _,c := range oper.Args[3].Text {
+				args = append(args,int16(c))
+			}
+			return GetInstance(NODE,args)
 	}
 	return nil,NewInstructionError("Invalid command "+operation.GetName(oper.Command))
 }

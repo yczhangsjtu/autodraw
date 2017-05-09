@@ -40,6 +40,14 @@ func ParseLine(line string) (Operation, error) {
 					values := append(NewValues(result...),NewValue(stringValue))
 					oper.Args = values
 					return oper,nil
+				case NODE:
+					nodeName := result[2]
+					stringValue := result[3]
+					result := variableFinder.FindAllString(result[1],-1)
+					values := append(NewValues(result...),NewValue(stringValue))
+					oper.Name = nodeName
+					oper.Args = values
+					return oper,nil
 				case USE:
 					fallthrough
 				case PUSH:

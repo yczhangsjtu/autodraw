@@ -26,6 +26,7 @@ const (
 	OVAL
 	POLYGON
 	TEXT
+	NODE
 	SET
 	USE
 	PUSH
@@ -50,7 +51,7 @@ const (
 )
 
 var operationNames = []string{
-	"undefined", "line", "rect", "oval", "polygon", "text", "set", "use",
+	"undefined", "line", "rect", "oval", "polygon", "text", "node", "set", "use",
 	"push", "pop", "transform", "rotate", "scale", "translate", "draw", "import",
 	"begin", "end",
 }
@@ -62,6 +63,7 @@ var operationPatterns = []string{
 	"^\\s*oval((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){4})\\s*$",
 	"^\\s*polygon(((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){2})+)\\s*$",
 	"^\\s*text((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){3})\\s+(\"[^\"]*\"|[_A-Za-z]\\w*)\\s*$",
+	"^\\s*node((?:\\s+(?:-?\\d+|[_A-Za-z]\\w*)){3})\\s+([_A-Za-z]\\w*)\\s+(\"[^\"]*\"|[_A-Za-z]\\w*)\\s*$",
 	"^\\s*set\\s+([_A-Za-z]\\w*)\\s+(-?\\d+|\"[^\"]*\"|[_A-Za-z]\\w*)\\s*$",
 	"^\\s*use\\s+([_A-Za-z]\\w*)\\s*$",
 	"^\\s*push\\s+([_A-Za-z]\\w*)\\s*$",
@@ -81,12 +83,7 @@ var variableRegexp *regexp.Regexp = nil
 var variableFinderPattern string = "-?\\d+|[_A-Za-z]\\w*"
 var variableFinderRegexp *regexp.Regexp = nil
 
-var operationRegexp = []*regexp.Regexp {
-	nil,nil,nil,nil,nil,
-	nil,nil,nil,nil,nil,
-	nil,nil,nil,nil,nil,
-	nil,nil,nil,
-}
+var operationRegexp []*regexp.Regexp = make([]*regexp.Regexp,19)
 
 var operationNameMap = map[string]int16{
 	"undefined": UNDEFINED, "line": LINE, "rect": RECT,

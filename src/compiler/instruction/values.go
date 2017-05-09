@@ -29,5 +29,5 @@ func GetCommand(name string) (int16,bool) {
 func ExpectArgNum(cmd int16, num int) bool {
 	return (cmd == LINE_STRIP && num%2==0 && num/2 > 1) ||
 				 (cmd == CURVE && num%2==0 && num/2 > 1 && ((num/2)%3)==1) ||
-				 (cmd == TEXT && num > 3)
+				 (cmd == TEXT && num > 3) || (cmd == NODE && num > 3)
 }

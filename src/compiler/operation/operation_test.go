@@ -229,6 +229,10 @@ func newTextOperation(coords ...Value) Operation {
 	return newOperationTypeDrawFixed(TEXT,coords...)
 }
 
+func newNodeOperation(name string,coords ...Value) Operation {
+	return newOperationTypeAssign(NODE,name,coords...)
+}
+
 func newPolygonOperation(coords ...Value) Operation {
 	return newOperationTypeDrawNondetermined(POLYGON, coords...)
 }

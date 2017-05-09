@@ -26,6 +26,7 @@ func TestOperationToInstruction(t *testing.T) {
 		"polygon 110 100 0 10 210 220",
 		"oval 110 110 100 50",
 		"text 0 0 256 \"HELLO\"",
+		"node 0 0 256 hello \"HELLO\"",
 	}
 	results := []Instruction {
 		{LINE_STRIP,[]int16{120,300,110,310}},
@@ -33,6 +34,7 @@ func TestOperationToInstruction(t *testing.T) {
 		{LINE_STRIP,[]int16{110,100,0,10,210,220,110,100}},
 		{CURVE,[]int16{210,110,210,137,165,160,110,160,55,160,10,137,10,110,10,82,55,60,110,60,165,60,210,82,210,110}},
 		{TEXT,[]int16{0,0,256,72,69,76,76,79}},
+		{NODE,[]int16{0,0,256,72,69,76,76,79}},
 	}
 	for i := 0; i < len(tests); i++ {
 		oper,err := operation.ParseLine(tests[i])

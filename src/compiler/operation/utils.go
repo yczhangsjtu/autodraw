@@ -14,7 +14,17 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
+import (
+	"image/color"
+)
+
 func ValidName(name string) bool {
 	pattern := GetVariableRegexp()
 	return pattern.MatchString(name)
+}
+
+func GetColor(c int16) color.Color {
+	code := uint16(c)
+	r,g,b,a := (code&0xf000)>>12,(code&0xf00)>>8,(code&0xf0)>>4,(code&0xf)
+	return color.RGBA{(uint8(r)<<4)|uint8(r),(uint8(g)<<4)|uint8(g),(uint8(b)<<4)|uint8(b),(uint8(a)<<4)|uint8(a)}
 }

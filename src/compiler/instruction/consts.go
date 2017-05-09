@@ -19,12 +19,13 @@ const (
 	LINE_STRIP
 	CURVE
 	TEXT
+	NODE
 )
 
 var instructionNames = []string {
-	"undefined","linestrip","curve","text",
+	"undefined","linestrip","curve","text","node",
 }
 
 var instructionNameMap = map[string]int16 {
-	"undefined":UNDEFINED, "linestrip":LINE_STRIP, "curve":CURVE, "text":TEXT,
+	"undefined":UNDEFINED, "linestrip":LINE_STRIP, "curve":CURVE, "text":TEXT,"node":NODE,
 }
