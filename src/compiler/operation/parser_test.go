@@ -14,12 +14,15 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
-import "testing"
+import (
+	"testing"
+)
 
 func BenchmarkParseLine(b *testing.B) {
 	tests := []string{
 		"undefined",
 		"line 120 300 110 310",
+		"line 120 300 110 Ab_",
 		"rect 110 0 0 110",
 		"polygon 110 100 0 10 210 220",
 		"oval 110 110 100 50",
@@ -28,6 +31,8 @@ func BenchmarkParseLine(b *testing.B) {
 		"push T",
 		"pop",
 		"transform T -100 10 -10 100 200 200",
+		"transform T A B C D E F",
+		"transform T Alice 0 Bob 100 Carror F",
 		"rotate s 110",
 		"scale s 110 -100",
 		"translate s 110 -100",
@@ -36,6 +41,50 @@ func BenchmarkParseLine(b *testing.B) {
 		"import no-plane",
 		"line 120 300 110",
 		"rect 110 0 0",
+		"line 120 300 110 310",
+		"rect 110 0 0 110",
+		"polygon 110 100 0 10 210 220",
+		"oval 110 110 100 50",
+		"set Alice 15",
+		"set Bob 20",
+		"set Bob Alice",
+		"set Alice 110",
+		"set Carror -10",
+		"set Bob Carror",
+		"set Carror Alice",
+		"transform T Alice 0 Bob 0 110 Carror",
+		"rotate X Alice",
+		"scale Y Bob Carror",
+		"translate W Bob Carror",
+		"set Q T",
+		"set P Q",
+		"begin subfigure",
+		"set X 0",
+		"set Y 1",
+		"set M 2",
+		"line 120 300 110 310",
+		"rect 110 0 0 110",
+		"polygon 110 100 0 10 210 220",
+		"oval 110 110 100 50",
+		"end",
+		"set Z X",
+		"set X Y",
+		"set U W",
+		"set V U",
+		"push T",
+		"line 120 300 110 310",
+		"rect 110 0 0 110",
+		"polygon 110 100 0 10 210 220",
+		"oval 110 110 100 50",
+		"pop",
+		"use T",
+		"line 120 300 110 310",
+		"use Q",
+		"rect 110 0 0 110",
+		"use P",
+		"draw subfigure",
+		"polygon 110 100 0 10 210 220",
+		"oval 110 110 100 50",
 	}
 	for i := 0; i < b.N; i++ {
 		for _, test := range tests {
@@ -59,6 +108,7 @@ func TestParseLine(t *testing.T) {
 		"rotate T 110",
 		"scale T 110 -100",
 		"translate T 110 -100",
+		"transform T Alice 0 Bob 0 110 Carror",
 		"draw plane",
 		"import plane",
 		"line 120 300 110",
@@ -78,6 +128,7 @@ func TestParseLine(t *testing.T) {
 		newRotateOperation("T", NewNumberValue(110)),
 		newScaleOperation("T", NewNumberValues(110,-100)...),
 		newTranslateOperation("T", NewNumberValues(110,-100)...),
+		newTransformOperation("T", NewValues("Alice","0","Bob","0","110","Carror")...),
 		newDrawOperation("plane"),
 		newImportOperation("plane"),
 		NewOperation(UNDEFINED),

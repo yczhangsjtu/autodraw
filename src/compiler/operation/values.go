@@ -14,6 +14,10 @@
 // along with autodraw.  If not, see <http://www.gnu.org/licenses/>.
 package operation
 
+import (
+	"regexp"
+)
+
 func ExpectName(op int16) bool {
 	return expectName[GetType(op)]
 }
@@ -28,6 +32,49 @@ func ExpectArgs(op int16) bool {
 
 func NeedArgNum(op int16) bool {
 	return needArgNum[GetType(op)]
+}
+
+func GetPattern(op int16) string {
+	if int(op) >= len(operationNames) {
+		return ""
+	}
+	return operationPatterns[op]
+}
+
+func GetOperationRegexp(op int16) *regexp.Regexp {
+	if int(op) >= len(operationRegexp) {
+		return nil
+	}
+	if operationRegexp[op] == nil {
+		var err error
+		operationRegexp[op],err = regexp.Compile(operationPatterns[op])
+		if err != nil {
+			return nil
+		}
+	}
+	return operationRegexp[op]
+}
+
+func GetVariableRegexp() *regexp.Regexp {
+	if variableRegexp == nil {
+		var err error
+		variableRegexp,err = regexp.Compile(variablePattern)
+		if err != nil {
+			return nil
+		}
+	}
+	return variableRegexp
+}
+
+func GetVariableFinderRegexp() *regexp.Regexp {
+	if variableFinderRegexp == nil {
+		var err error
+		variableFinderRegexp,err = regexp.Compile(variableFinderPattern)
+		if err != nil {
+			return nil
+		}
+	}
+	return variableFinderRegexp
 }
 
 func GetCommand(name string) (int16,bool) {

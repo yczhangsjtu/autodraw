@@ -16,6 +16,7 @@ package operation
 
 import (
 	"fmt"
+	"strconv"
 	"compiler/transformer"
 )
 
@@ -24,6 +25,23 @@ type Value struct {
 	Name      string
 	Number    int16
 	Transform *transformer.Transform
+}
+
+func NewValue(v string) Value {
+	number,err := strconv.ParseInt(v,10,16)
+	if err == nil {
+		return NewNumberValue(int16(number))
+	}
+	return NewVariableValue(v)
+}
+
+func NewValues(v ...string) []Value {
+	n := len(v)
+	values := make([]Value,n)
+	for i := 0; i < n; i++ {
+		values[i] = NewValue(v[i])
+	}
+	return values
 }
 
 func NewNumberValue(x int16) Value {

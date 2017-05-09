@@ -15,25 +15,12 @@
 package operation
 
 import (
-	"unicode"
 	"strconv"
 )
 
 func ValidName(name string) bool {
-	if len(name) == 0 {
-		return false
-	}
-	for i, c := range name {
-		if !unicode.IsLetter(c) {
-			if i == 0 {
-				return false
-			}
-			if !unicode.IsDigit(c) && c != '-' && c != '.' && c != '_' {
-				return false
-			}
-		}
-	}
-	return true
+	pattern := GetVariableRegexp()
+	return pattern.MatchString(name)
 }
 
 func tokenIdentify(token string) int16 {
