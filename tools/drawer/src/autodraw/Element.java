@@ -6,7 +6,7 @@ import java.util.ArrayList;
 abstract public class Element {
 	
 	public enum ElementType {
-		UNDEFINED, LINE, RECT, POLYGON, OVAL
+		UNDEFINED, LINE, RECT, POLYGON, OVAL, TEXT
 	}
 
 	protected ElementType type;

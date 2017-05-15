@@ -20,13 +20,13 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 	private static final long serialVersionUID = 3196872295964223375L;
 	
 	private final int toolbarHeight = 30;
-	private final int toolButtonWidth = 30;
-	private final int buttonCount = 4;
+	private final int buttonCount = 5;
 	
 	private DrawButton buttons[];
 	
 	private Element.ElementType tool = Element.ElementType.LINE;
 	private ArrayList<Point> pointBuffer;
+	private String textBuffer;
 	private int mousex,mousey;
 	
 	private ArrayList<Element> elementList;
@@ -34,17 +34,18 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 	private JTextArea output;
 
 	private int grid = 1;
-	
 
 	public Canvas() {
 		repaint();
 		this.pointBuffer = new ArrayList<Point>();
 		this.elementList = new ArrayList<Element>();
+		this.textBuffer = "";
 		this.buttons = new DrawButton[buttonCount];
 		this.buttons[0] = new DrawButton(0,0,Element.ElementType.LINE);
 		this.buttons[1] = new DrawButton(DrawButton.toolButtonWidth,0,Element.ElementType.RECT);
 		this.buttons[2] = new DrawButton(DrawButton.toolButtonWidth*2,0,Element.ElementType.POLYGON);
 		this.buttons[3] = new DrawButton(DrawButton.toolButtonWidth*3,0,Element.ElementType.OVAL);
+		this.buttons[4] = new DrawButton(DrawButton.toolButtonWidth*4,0,Element.ElementType.TEXT);
 		addKeyListener(this);
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -118,6 +119,8 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 			drawTmpOval(g2d);
 		} else if (this.tool == Element.ElementType.POLYGON) {
 			drawTmpPolygon(g2d);
+		} else if (this.tool == Element.ElementType.TEXT) {
+			drawTmpText(g2d);
 		}
 	}
 	
@@ -165,19 +168,26 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 			g2d.drawOval(startPoint.x-a,startPoint.y-b,a*2,b*2);
 		}
 	}
+	
+	private void drawTmpText(Graphics2D g2d) {
+		g2d.setFont(new Font("TimesRoman",Font.PLAIN,24));
+		if(this.pointBuffer.size() >= 1) {
+			Point point = pointBuffer.get(0);
+			g2d.setColor(Color.black);
+			int w = g2d.getFontMetrics().stringWidth(this.textBuffer);
+			int h = g2d.getFontMetrics().getHeight();
+			g2d.drawString(textBuffer, point.x-w/2, point.y+h/2);
+			g2d.drawLine(point.x+w/2, point.y-h/2, point.x+w/2, point.y+h/2);
+		}
+	}
 
 	private void drawMouse(Graphics2D g2d) {
 		g2d.drawOval(this.mousex-5, this.mousey-5, 10, 10);
 		g2d.drawOval(this.mousex-1, this.mousey-1, 1, 1);
 	}
-	
-	public boolean buttonClicked(int x, int y, int bx, int by) {
-		return x > bx && x < bx+toolButtonWidth && y > by && y < by+toolbarHeight;
-	}
 
 	public void mouseDragged(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	public void mouseMoved(MouseEvent e) {
@@ -229,6 +239,7 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 	
 	public void clear() {
 		this.pointBuffer = new ArrayList<Point>();
+		this.textBuffer = "";
 	}
 	
 	public void completeFixed() {
@@ -274,6 +285,14 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 			clear();
 		}
 	}
+	
+	public void completeText() {
+		if(this.pointBuffer.size() >= 1 && !textBuffer.equals("")) {
+			Point p = this.pointBuffer.get(0);
+			this.elementList.add(new TextElement(textBuffer,p.x,p.y));
+			clear();
+		}
+	}
 
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
@@ -297,35 +316,47 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
-		switch(key) {
-		case KeyEvent.VK_S:
-			this.output.setText("");
-			for(Element elem: this.elementList) {
-				try {
-					this.output.setText(this.output.getText()+
-							elem.translated(this.originx, this.originy).toString()+"\n");
-				} catch (CloneNotSupportedException e1) {
-					e1.printStackTrace();
+		if(this.tool == Element.ElementType.TEXT && this.pointBuffer.size() >= 1) {
+			char c = e.getKeyChar();
+			if(key == KeyEvent.VK_ENTER) {
+				completeText();
+			} else if(key == KeyEvent.VK_BACK_SPACE) {
+				if(this.textBuffer.length() > 0)
+					this.textBuffer = this.textBuffer.substring(0, this.textBuffer.length()-1);
+			} else if(c >= ' ' && c <= '~')
+				this.textBuffer += c;
+		} else {
+			switch(key) {
+			case KeyEvent.VK_S:
+				this.output.setText("");
+				for(Element elem: this.elementList) {
+					try {
+						this.output.setText(this.output.getText()+
+								elem.translated(this.originx, this.originy).toString()+"\n");
+					} catch (CloneNotSupportedException e1) {
+						e1.printStackTrace();
+					}
 				}
+				break;
+			case KeyEvent.VK_C:
+				this.elementList.clear();
+				break;
+			case KeyEvent.VK_Z:
+				if(this.elementList.size()>0)
+					this.elementList.remove(this.elementList.size()-1);
+				break;
+			case KeyEvent.VK_1:
+			case KeyEvent.VK_2:
+			case KeyEvent.VK_3:
+			case KeyEvent.VK_4:
+			case KeyEvent.VK_5:
+			case KeyEvent.VK_6:
+			case KeyEvent.VK_7:
+			case KeyEvent.VK_8:
+			case KeyEvent.VK_9:
+				this.grid = e.getKeyChar()-'0';
+				break;
 			}
-			break;
-		case KeyEvent.VK_C:
-			this.elementList.clear();
-			break;
-		case KeyEvent.VK_Z:
-			if(this.elementList.size()>0)
-				this.elementList.remove(this.elementList.size()-1);
-			break;
-		case KeyEvent.VK_1:
-		case KeyEvent.VK_2:
-		case KeyEvent.VK_3:
-		case KeyEvent.VK_4:
-		case KeyEvent.VK_5:
-		case KeyEvent.VK_6:
-		case KeyEvent.VK_7:
-		case KeyEvent.VK_8:
-		case KeyEvent.VK_9:
-			this.grid = e.getKeyChar()-'0';
 		}
 		repaint();
 	}

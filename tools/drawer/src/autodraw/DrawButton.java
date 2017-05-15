@@ -32,6 +32,8 @@ public class DrawButton {
 			drawPolygonButton(g2d,getX(),getY());
 		} else if(this.type == Element.ElementType.OVAL) {
 			drawOvalButton(g2d,getX(),getY());
+		} else if(this.type == Element.ElementType.TEXT) {
+			drawTextButton(g2d,getX(),getY());
 		}
 	}
 
@@ -60,15 +62,10 @@ public class DrawButton {
 		g2d.drawOval(x+padding, y+padding, toolButtonWidth-padding*2, toolButtonHeight-padding*2);
 	}
 	
-	public void drawButton(Graphics2D g2d, String name, int x, int y) {
-		if(name == "line") {
-			drawLineButton(g2d,x,y);
-		} else if(name == "rect") {
-			drawRectButton(g2d,x,y);
-		} else if(name == "polygon") {
-			drawPolygonButton(g2d,x,y);
-		} else if(name == "oval") {
-			drawOvalButton(g2d,x,y);
-		}
+	public void drawTextButton(Graphics2D g2d, int x, int y) {
+		g2d.setColor(Color.black);
+		g2d.setFont(new Font("TimesRoman",Font.PLAIN,12));
+		g2d.drawRect(x, y, toolButtonWidth, toolButtonHeight);
+		g2d.drawString("Text", x+padding, y+toolButtonHeight*2/3);
 	}
 }
