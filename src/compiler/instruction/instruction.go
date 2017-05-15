@@ -25,8 +25,7 @@ type Instruction struct {
 }
 
 func NewInstruction() *Instruction {
-	inst := Instruction{0,[]int16{}}
-	return &inst
+	return new(Instruction)
 }
 
 func (inst *Instruction) Equal(inst2 *Instruction) bool {
