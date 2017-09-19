@@ -1,6 +1,7 @@
 package autodraw;
 
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.ArrayList;
 
 abstract public class Element {
@@ -19,6 +20,9 @@ abstract public class Element {
 	
 	public abstract String getType();
 	public abstract void draw(Graphics2D g2d);
+	public abstract void drawHighlight(Graphics2D g2d);
+	public abstract Touch getTouch(int x, int y);
+	public abstract Point getPointTouch(int index);
 	public abstract Element translated(int originx, int originy)
 			throws CloneNotSupportedException;
 	

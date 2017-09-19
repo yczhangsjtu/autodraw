@@ -2,6 +2,7 @@ package autodraw;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 
 public class RectElement extends Element {
 	private RectElement() {
@@ -28,6 +29,13 @@ public class RectElement extends Element {
 				this.arguments.get(2)-this.arguments.get(0),
 				this.arguments.get(3)-this.arguments.get(1));
 	}
+	@Override
+	public void drawHighlight(Graphics2D g2d) {
+		g2d.setColor(Color.red);
+		g2d.drawRect(this.arguments.get(0), this.arguments.get(1),
+				this.arguments.get(2)-this.arguments.get(0),
+				this.arguments.get(3)-this.arguments.get(1));
+	}
 	
 	public String getType() {
 		return "rect";
@@ -47,5 +55,28 @@ public class RectElement extends Element {
 		RectElement e = (RectElement)this.clone();
 		e.translate(originx, originy);
 		return e;
+	}
+	@Override
+	public Touch getTouch(int x, int y) {
+		int x0 = this.arguments.get(0), y0 = this.arguments.get(1),
+			x1 = this.arguments.get(2), y1 = this.arguments.get(3);
+		if(Touch.close(x,y,x0,y0)) return new Touch(this,1);
+		if(Touch.close(x,y,x1,y1)) return new Touch(this,2);
+		if(Touch.close(x,y,x0,y1)) return new Touch(this,3);
+		if(Touch.close(x,y,x1,y0)) return new Touch(this,4);
+		if(x > x0 && x < x1 && y > y0 && y < y1) return new Touch(this);
+		return null;
+	}
+	@Override
+	public Point getPointTouch(int index) {
+		int x0 = this.arguments.get(0), y0 = this.arguments.get(1),
+			x1 = this.arguments.get(2), y1 = this.arguments.get(3);
+		switch(index) {
+		case 1: return new Point(x0,y0);
+		case 2: return new Point(x1,y1);
+		case 3: return new Point(x0,y1);
+		case 4: return new Point(x1,y0);
+		}
+		return null;
 	}
 }

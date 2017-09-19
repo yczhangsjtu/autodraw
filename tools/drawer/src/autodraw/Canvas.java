@@ -32,6 +32,7 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 	private ArrayList<Element> elementList;
 	private int originx,originy;
 	private JTextArea output;
+	private Touch touch;
 
 	private int grid = 1;
 
@@ -60,6 +61,7 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 		drawElements(g2d);
 		drawButtons(g2d);
 		drawCoordinates(g2d);
+		drawTouch(g2d);
 		drawMouse(g2d);
 	}
 	
@@ -108,6 +110,12 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 		g2d.setColor(Color.green);
 		g2d.drawLine(0,this.originy,getWidth(),this.originy);
 		g2d.drawLine(this.originx,0,this.originx,getHeight());
+	}
+	
+	private void drawTouch(Graphics2D g2d) {
+		if(this.touch != null) {
+			this.touch.draw(g2d);
+		}
 	}
 	
 	private void drawTmp(Graphics2D g2d) {
@@ -195,6 +203,14 @@ public class Canvas extends JPanel implements MouseListener,MouseMotionListener,
 		this.mousey = e.getY();
 		rectifyMouse();
 		if(!this.isFocusOwner()) this.grabFocus();
+		Touch t;
+		touch = null;
+		for(Element elem: this.elementList) {
+			if((t = elem.getTouch(this.mousex, this.mousey))!=null) {
+				if(touch == null || !touch.hasPoint() || t.hasPoint())
+					touch = t;
+			}
+		}
 		repaint();
 	}
 
